@@ -97,6 +97,25 @@ public class InteractionServlet extends HttpServlet {
             out.print("]");
             out.flush();
 
+        } else if ("getLikeCounts".equals(action)) {
+            String postIdsParam = request.getParameter("postIds");
+            response.setContentType("application/json");
+            PrintWriter out = response.getWriter();
+            out.print("{");
+            if (postIdsParam != null && !postIdsParam.trim().isEmpty()) {
+                String[] ids = postIdsParam.split(",");
+                for (int i = 0; i < ids.length; i++) {
+                    try {
+                        int pid = Integer.parseInt(ids[i].trim());
+                        int count = postDAO.getLikeCount(pid);
+                        out.print("\"" + pid + "\":" + count);
+                        if (i < ids.length - 1) out.print(",");
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            out.print("}");
+            out.flush();
+
         } else if ("getFollowers".equals(action)) {
             int targetId = Integer.parseInt(request.getParameter("targetId"));
             User targetUser = userDAO.getUserById(targetId);

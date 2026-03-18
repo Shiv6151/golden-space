@@ -121,8 +121,8 @@ public class PostDAO {
 
     public List<Post> getFeedPosts(int currentUserId) {
         List<Post> posts = new ArrayList<>();
-        // Fetch posts from friends AND user's own posts, ordered by newest first
-        String query = 
+        // Show ALL public posts + own posts (global feed)
+        String query =
             "SELECT p.*, u.name, u.username, u.profile_photo, " +
             "(SELECT COUNT(*) FROM Likes WHERE post_id = p.post_id) AS like_count, " +
             "(SELECT COUNT(*) FROM Comments WHERE post_id = p.post_id) AS comment_count, " +
@@ -130,19 +130,13 @@ public class PostDAO {
             "AS is_liked_by_me " +
             "FROM Posts p " +
             "JOIN Users u ON p.user_id = u.user_id " +
-            "WHERE p.user_id = ? " +
-            "OR (p.user_id IN (SELECT following_id FROM followers WHERE follower_id = ?) " +
-            "    AND (u.is_private = 0 OR " +
-            "         p.user_id IN (SELECT follower_id FROM followers WHERE following_id = ?))) " +
+            "WHERE u.is_private = 0 OR p.user_id = ? " +
             "ORDER BY p.post_date DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-             
             stmt.setInt(1, currentUserId);
             stmt.setInt(2, currentUserId);
-            stmt.setInt(3, currentUserId);
-            stmt.setInt(4, currentUserId);
             
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -447,5 +441,17 @@ public class PostDAO {
         post.setImages(images);
         
         return post;
+    }
+
+    public int getLikeCount(int postId) {
+        String query = "SELECT COUNT(*) FROM Likes WHERE post_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, postId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
     }
 }

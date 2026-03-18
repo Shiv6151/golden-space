@@ -12,8 +12,8 @@
             <a href="FeedServlet" class="nav-link" title="Home"><i class="fas fa-home fa-lg"></i></a>
             <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link" title="Search"><i class="fas fa-search fa-lg"></i></a>
             <a href="${pageContext.request.contextPath}/create_post.jsp" class="nav-link" title="Add Post"><i class="fas fa-plus fa-lg"></i></a>
-            <div class="nav-item-dropdown" style="position:relative;">
-                <a href="javascript:void(0)" class="nav-link" title="Notifications" id="heart-notification-btn" onclick="toggleFriendRequestsDropdown()">
+            <div class="nav-item-dropdown" style="position:relative;" id="notif-nav-wrapper">
+                <a href="NotificationServlet" class="nav-link" title="Notifications" id="heart-notification-btn">
                     <i class="fas fa-heart fa-lg"></i>
                     <span id="heart-notif-dot" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
                 </a>

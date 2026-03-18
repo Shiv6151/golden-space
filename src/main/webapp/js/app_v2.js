@@ -1360,3 +1360,63 @@ document.addEventListener('click', function(e) {
     if (modal && e.target === modal) modal.style.display = 'none';
 });
 // --- End Followers / Following List Modal ---
+
+// ============================================================
+// LOCAL TIME CONVERSION
+// Converts elements with class 'local-time' and data-utc (ms)
+// ============================================================
+function localTimeInit() {
+    document.querySelectorAll('.local-time[data-utc]').forEach(el => {
+        const ms = parseInt(el.getAttribute('data-utc'));
+        if (isNaN(ms)) return;
+        const d = new Date(ms);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHr = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHr / 24);
+        let label;
+        if (diffSec < 60) label = 'just now';
+        else if (diffMin < 60) label = diffMin + 'm ago';
+        else if (diffHr < 24) label = diffHr + 'h ago';
+        else if (diffDay < 7) label = diffDay + 'd ago';
+        else label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        el.textContent = label;
+        el.title = d.toLocaleString();
+    });
+}
+document.addEventListener('DOMContentLoaded', localTimeInit);
+
+// ============================================================
+// REAL-TIME LIKE COUNT POLLING (every 30s)
+// Polls for updated like counts on visible posts
+// ============================================================
+function pollLikeCounts() {
+    const likeSpans = document.querySelectorAll('[id^="like-count-"]');
+    if (!likeSpans.length) return;
+    const postIds = [...likeSpans].map(el => el.id.replace('like-count-', '')).join(',');
+    fetch((window.contextPath || '') + '/InteractionServlet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'action=getLikeCounts&postIds=' + encodeURIComponent(postIds)
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+        if (!data) return;
+        Object.entries(data).forEach(([postId, count]) => {
+            const span = document.getElementById('like-count-' + postId);
+            const icon = document.getElementById('like-icon-' + postId);
+            if (span && icon) {
+                const isLikedByMe = icon.style.color === 'rgb(255, 71, 87)' || icon.style.color === '#ff4757';
+                span.textContent = count;
+            }
+        });
+    })
+    .catch(() => {});
+}
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('[id^="like-count-"]')) {
+        setInterval(pollLikeCounts, 30000);
+    }
+});

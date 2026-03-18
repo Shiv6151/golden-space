@@ -872,3 +872,28 @@
     pointer-events: none;
     z-index: 9999;
 }
+
+/* ============================================
+   ACTION BUTTONS (Post Like/Comment/Share bar)
+   ============================================ */
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    flex: 1;
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-radius: 6px;
+    transition: background 0.18s, color 0.18s;
+    font-family: inherit;
+}
+.action-btn:hover {
+    background: var(--bg-light);
+    color: var(--primary-color);
+}

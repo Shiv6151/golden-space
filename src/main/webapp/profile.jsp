@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 <!DOCTYPE html>
@@ -99,10 +99,7 @@
                         <c:when test="${isSelf}">
                             <div style="display:flex; gap:0.5rem; align-items:center;">
                                 <button class="btn btn-outline btn-sm" onclick="toggleEditModal()">Edit Profile</button>
-                                <form action="DeleteAccountServlet" method="POST" style="margin:0;" onsubmit="return confirm('CRITICAL WARNING: This will permanently delete your account, all your posts, messages, and followers. This action CANNOT be undone. Are you absolutely sure?');">
-                                    <button type="submit" class="btn btn-danger btn-sm" style="background:var(--danger-color, #ff4757); color:white; border:none;">Delete Account</button>
-                                </form>
-                                <button class="action-btn" onclick="toggleSettingsModal()" title="Settings" style="padding:0; background:none; border:none; cursor:pointer;"><i class="fas fa-cog fa-lg"></i></button>
+                                <button class="action-btn" onclick="toggleSettingsModal()" title="Settings" style="padding:4px 8px; background:none; border:none; cursor:pointer;"><i class="fas fa-cog fa-lg"></i></button>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -298,24 +295,56 @@
     <!-- Edit Profile Modal -->
     <c:if test="${isSelf}">
     <div id="editProfileModal" class="modal">
-        <div class="modal-content card">
-            <span class="close" onclick="toggleEditModal()">&times;</span>
-            <h2>Edit Profile</h2>
-            <form action="EditProfileServlet" method="POST" enctype="multipart/form-data" class="mt-4">
-                <div class="form-group">
-                    <label class="form-label" for="name">Name</label>
-                    <input class="form-input" type="text" id="name" name="name" value="${profileUser.name}" required>
+        <div class="modal-content card" style="max-width:480px; padding:0; overflow:hidden; border-radius:16px;">
+            <!-- Header with avatar preview -->
+            <div style="background:linear-gradient(135deg,var(--primary-color),#ff6b81); padding:1.75rem 1.5rem 2.5rem; text-align:center; position:relative;">
+                <button onclick="toggleEditModal()" style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.2); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
+                <div style="position:relative; display:inline-block; cursor:pointer;" onclick="document.getElementById('profilePhoto').click();" title="Click to change photo">
+                    <img id="avatarPreview"
+                         src="${profileUser.profilePhoto != null && (profileUser.profilePhoto.startsWith('http') || profileUser.profilePhoto.startsWith('data:')) ? profileUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(profileUser.profilePhoto != null ? profileUser.profilePhoto : 'images/default-avatar.png')}"
+                         style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.8); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                    <div style="position:absolute; bottom:0; right:0; background:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                        <i class="fas fa-camera" style="font-size:0.7rem; color:var(--primary-color);"></i>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="bio">Bio</label>
-                    <textarea class="form-input" id="bio" name="bio" rows="3">${profileUser.bio}</textarea>
+                <h3 style="margin:0.75rem 0 0; color:white; font-size:1.15rem; font-weight:700;">Edit Profile</h3>
+                <p style="margin:0.3rem 0 0; color:rgba(255,255,255,0.8); font-size:0.82rem;">@${profileUser.username}</p>
+            </div>
+
+            <form action="EditProfileServlet" method="POST" enctype="multipart/form-data" style="padding:1.25rem; display:flex; flex-direction:column; gap:0.9rem;">
+                <!-- Hidden file input -->
+                <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+
+                <!-- Name -->
+                <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fas fa-user" style="color:var(--primary-color); font-size:0.75rem;"></i> Full Name
+                    </label>
+                    <input class="form-input" type="text" name="name" value="${profileUser.name}"
+                           style="border-radius:10px; padding:0.65rem 0.9rem; font-size:0.95rem;" placeholder="Your full name" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="profilePhoto">Upload Profile Photo</label>
-                    <input class="form-input" type="file" id="profilePhoto" name="profilePhoto" accept="image/*">
-                    <small class="text-muted">Choose an image from your computer to update your avatar.</small>
+
+                <!-- Bio -->
+                <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fas fa-align-left" style="color:var(--primary-color); font-size:0.75rem;"></i> Bio
+                    </label>
+                    <textarea class="form-input" name="bio" rows="3"
+                              style="border-radius:10px; padding:0.65rem 0.9rem; font-size:0.95rem; resize:vertical; font-family:inherit;"
+                              placeholder="Tell people a bit about yourself...">${profileUser.bio}</textarea>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+
+                <!-- Photo upload hint -->
+                <div style="background:var(--bg-light); border-radius:10px; padding:0.75rem 1rem; display:flex; align-items:center; gap:0.6rem; cursor:pointer; border:2px dashed var(--border-color);" onclick="document.getElementById('profilePhoto').click();">
+                    <i class="fas fa-image" style="color:var(--primary-color);"></i>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Click to upload a new profile photo</span>
+                    <i class="fas fa-upload" style="color:var(--text-muted); margin-left:auto;"></i>
+                </div>
+
+                <!-- Save button -->
+                <button type="submit" style="width:100%; padding:0.75rem; background:linear-gradient(135deg,var(--primary-color),#ff6b81); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; font-size:1rem; font-family:inherit; letter-spacing:0.01em; box-shadow:0 4px 12px rgba(255,71,87,0.3);">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
             </form>
         </div>
     </div>
@@ -380,7 +409,7 @@
                     <form id="passwordForm" onsubmit="updatePassword(event)">
                         <input type="password" id="currentPassword" placeholder="Current Password" class="form-input" style="margin-bottom:0.5rem;" required>
                         <input type="password" id="newPassword" placeholder="New Password" class="form-input" style="margin-bottom:0.5rem;" required>
-                        <button type="submit" class="btn btn-outline w-100" style="font-size:0.9rem;">Update Password</button>
+                        <button type="submit" style="width:100%; padding:0.6rem; background:linear-gradient(135deg,var(--primary-color),#ff6b81); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; font-family:inherit;">Update Password</button>
                     </form>
                     <div id="passwordMessage" style="font-size:0.8rem; margin-top:0.3rem;"></div>
                 </div>
@@ -399,8 +428,8 @@
                         <i class="fas fa-exclamation-triangle"></i> Danger Zone
                     </div>
                     <form action="DeleteAccountServlet" method="POST" onsubmit="return confirm('⚠️ This will permanently delete your account, all posts, and messages. This CANNOT be undone. Are you sure?');">
-                        <button type="submit" style="width:100%; padding:0.65rem; background:var(--danger-color); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-size:0.9rem;">
-                            <i class="fas fa-user-slash"></i> Delete Account Permanently
+                        <button type="submit" style="width:100%; padding:0.65rem; background:#ff3547; color:#ffffff !important; border:2px solid #cc0000; border-radius:8px; cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-size:0.9rem; letter-spacing:0.02em;">
+                            <i class="fas fa-user-slash"></i> ⚠ Delete Account Permanently
                         </button>
                     </form>
                 </div>
@@ -492,7 +521,16 @@
             document.getElementById('followModal').style.display = 'none';
         }
 
-        function toggleEditModal() {
+                function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+function toggleEditModal() {
             const modal = document.getElementById('editProfileModal');
             if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
         }
