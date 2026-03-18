@@ -180,23 +180,27 @@
         }
     </style>
     
-    <div class="post-stats" style="display:flex; justify-content:space-between;">
-        <span style="position:relative;">
+    <div class="post-stats" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <span style="position:relative; cursor:pointer;" onclick="toggleLikers('${post.postId}')">
             <i class="fas fa-heart" style="color: #ff4757;"></i> <span id="like-count-${post.postId}">${post.likeCount}</span> Likes
-            <button onclick="toggleLikers('${post.postId}')" style="border:none;background:none;font-size:0.8rem;color:var(--text-muted);cursor:pointer;"><i class="fas fa-chevron-down" id="likers-chevron-${post.postId}"></i></button>
+            <button onclick="event.stopPropagation(); toggleLikers('${post.postId}')" style="border:none;background:none;font-size:0.8rem;color:var(--text-muted);cursor:pointer;" title="See who liked"><i class="fas fa-chevron-down" id="likers-chevron-${post.postId}"></i></button>
             <div id="likers-dropdown-${post.postId}" style="display:none; position:absolute; top:25px; left:0; background:white; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:1rem; z-index:10; width:200px; max-height:200px; overflow-y:auto;">
-                <!-- Likers loaded here via AJAX -->
                 <div class="text-center text-muted"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
             </div>
         </span>
         <span style="cursor:pointer;" onclick="toggleComments('${post.postId}')">${post.commentCount} Comments <i class="fas fa-chevron-down"></i></span>
     </div>
-    
-        <button type="button" class="action-btn text-muted" onclick="toggleComments('${post.postId}')" style="flex:1; text-align:center;">
-            <i class="fas fa-comment ms-2"></i> Comment
+
+    <!-- Action Buttons: Like | Comment | Share — all in one row -->
+    <div style="display:flex; align-items:center; border-top:1px solid var(--border-color); padding-top:0.5rem;">
+        <button id="like-btn-${post.postId}" type="button" class="action-btn text-muted" onclick="toggleLike('${post.postId}', true)" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Like this post">
+            <i id="like-icon-${post.postId}" class="fa${post.likedByMe ? 's' : 'r'} fa-heart" style="color:${post.likedByMe ? '#ff4757' : 'inherit'};"></i> Like
         </button>
-        <button type="button" class="action-btn text-muted" onclick="openShareModal('${post.postId}')" style="flex:1; text-align:center;">
-            <i class="far fa-paper-plane ms-2"></i> Share
+        <button type="button" class="action-btn text-muted" onclick="toggleComments('${post.postId}')" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Comment on this post">
+            <i class="fas fa-comment"></i> Comment
+        </button>
+        <button type="button" class="action-btn text-muted" onclick="openShareModal('${post.postId}')" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Share this post">
+            <i class="far fa-paper-plane"></i> Share
         </button>
     </div>
     

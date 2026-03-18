@@ -291,6 +291,74 @@
             background: var(--border-color);
             border-color: #ccc;
         }
+
+        /* ---- MOBILE RESPONSIVE CHAT ---- */
+        .back-btn {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0;
+            margin-right: 8px;
+        }
+        @media (max-width: 768px) {
+            body {
+                overflow: auto !important;
+                height: auto !important;
+            }
+            .chat-layout {
+                flex-direction: row;
+                height: calc(100vh - 60px);
+                max-width: 100vw;
+                overflow: hidden;
+                position: relative;
+            }
+            .chat-sidebar {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10;
+                transition: transform 0.3s ease;
+                border-right: none;
+                background: var(--bg-white);
+            }
+            .chat-main {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 5;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            }
+            body.chat-open .chat-sidebar {
+                transform: translateX(-100%);
+            }
+            body.chat-open .chat-main {
+                transform: translateX(0);
+            }
+            .back-btn {
+                display: flex;
+            }
+            .message-bubble {
+                max-width: 85% !important;
+            }
+            .chat-messages {
+                padding: 0.75rem !important;
+            }
+            .chat-header {
+                padding: 0.75rem 1rem !important;
+            }
+            .chat-sidebar-header {
+                padding: 1rem 1rem !important;
+            }
+        }
     </style>
 </head>
 <body style="background-color: var(--bg-light); margin: 0; height: 100vh; overflow: hidden;">
@@ -354,8 +422,14 @@
         <div class="chat-main">
             <c:choose>
                 <c:when test="${not empty chatUser}">
+                    <c:if test="${not empty chatUser}">
+                        <script>document.body.classList.add('chat-open');</script>
+                    </c:if>
                     <div class="chat-header" style="justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button class="back-btn" onclick="goBackToSidebar()" title="Back to chats">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
                             <img src="${chatUser.profilePhoto != null && chatUser.profilePhoto.startsWith('http') ? chatUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(chatUser.profilePhoto != null ? chatUser.profilePhoto : 'images/default-avatar.png')}" class="post-avatar">
                             <h3 style="margin: 0;"><a href="ProfileServlet?id=${chatUser.userId}" style="color: inherit;">${chatUser.name}</a></h3>
                         </div>
@@ -609,4 +683,9 @@
         </div>
     </div>
 </body>
+<script>
+function goBackToSidebar() {
+    document.body.classList.remove('chat-open');
+}
+</script>
 </html>

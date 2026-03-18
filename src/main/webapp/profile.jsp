@@ -11,6 +11,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css?v=<%= System.currentTimeMillis() %>">
     <link rel="stylesheet" href="css/app.css?v=<%= System.currentTimeMillis() %>">
+    <style>
+        @media (max-width: 768px) {
+            .ig-profile-header {
+                flex-direction: column !important;
+                align-items: center !important;
+                padding: 1rem !important;
+                gap: 1rem !important;
+            }
+            .ig-avatar-section {
+                align-items: center !important;
+                text-align: center !important;
+            }
+            .ig-avatar { width: 80px !important; height: 80px !important; }
+            .ig-info-section {
+                width: 100% !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+            .ig-user-row {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 0.5rem !important;
+            }
+            .ig-stats {
+                gap: 1.5rem !important;
+                justify-content: center !important;
+            }
+            .ig-full-name { font-size: 1.15rem !important; }
+            .ig-bio { font-size: 0.9rem !important; }
+            .profile-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 2px !important;
+            }
+            .main-container { padding: 0 !important; }
+            #settingsModal .modal-content {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                margin: 1rem auto !important;
+            }
+            .btn { font-size: 0.85rem !important; padding: 0.4rem 0.9rem !important; }
+        }
+        @media (max-width: 480px) {
+            .ig-avatar { width: 70px !important; height: 70px !important; }
+            .ig-stats { gap: 1rem !important; }
+            .profile-grid { gap: 1px !important; }
+        }
+    </style>
 </head>
 <body>
     <jsp:include page="components/navbar.jsp" />
@@ -275,19 +322,29 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
-        <div class="modal-content card" style="max-width:400px;">
-            <span class="close" onclick="toggleSettingsModal()">&times;</span>
-            <div style="border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
-                <i class="fas fa-cog text-muted"></i>
-                <h2 style="margin:0; font-size:1.3rem;">Settings</h2>
+        <div class="modal-content card" style="max-width:420px; padding:0; overflow:hidden; border-radius:16px;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, var(--primary-color), #ff6b81); padding: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:white; font-size:1.1rem;">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h2 style="margin:0; font-size:1.25rem; color:white; font-weight:700;">Settings</h2>
+                </div>
+                <button onclick="toggleSettingsModal()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
             </div>
-            
-            <div class="settings-options">
-                <!-- Theme Toggle -->
-                <div class="setting-item" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
-                    <div>
-                        <div style="font-weight:600;">Dark Mode</div>
-                        <small id="themeStatus" class="text-muted">Off</small>
+
+            <div style="padding:1.25rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <!-- Dark Mode -->
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:var(--primary-color); display:flex; align-items:center; justify-content:center; color:white;">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:0.95rem;">Dark Mode</div>
+                            <small id="themeStatus" class="text-muted">Off</small>
+                        </div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="themeToggle" onchange="ThemeManager.toggle()">
@@ -295,11 +352,16 @@
                     </label>
                 </div>
 
-                <!-- Privacy Toggle -->
-                <div class="setting-item" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
-                    <div>
-                        <div style="font-weight:600;">Account Privacy</div>
-                        <small id="privacyStatus" class="text-muted">${profileUser.privateAccount ? "Private Account" : "Public Account"}</small>
+                <!-- Privacy -->
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:#6c63ff; display:flex; align-items:center; justify-content:center; color:white;">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:0.95rem;">Private Account</div>
+                            <small id="privacyStatus" class="text-muted">${profileUser.privateAccount ? "Private" : "Public"}</small>
+                        </div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="privacyToggle" ${profileUser.privateAccount ? "checked" : ""} onchange="updatePrivacy(this.checked)">
@@ -308,27 +370,36 @@
                 </div>
 
                 <!-- Change Password -->
-                <div class="setting-item" style="padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
-                    <div style="font-weight:600; margin-bottom:0.8rem;">Change Password</div>
+                <div style="padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:#00b894; display:flex; align-items:center; justify-content:center; color:white;">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div style="font-weight:600; font-size:0.95rem;">Change Password</div>
+                    </div>
                     <form id="passwordForm" onsubmit="updatePassword(event)">
-                        <input type="password" id="currentPassword" placeholder="Current Password" class="form-input mb-2" required>
-                        <input type="password" id="newPassword" placeholder="New Password" class="form-input mb-2" required>
-                        <button type="submit" class="btn btn-outline btn-sm w-100">Update Password</button>
+                        <input type="password" id="currentPassword" placeholder="Current Password" class="form-input" style="margin-bottom:0.5rem;" required>
+                        <input type="password" id="newPassword" placeholder="New Password" class="form-input" style="margin-bottom:0.5rem;" required>
+                        <button type="submit" class="btn btn-outline w-100" style="font-size:0.9rem;">Update Password</button>
                     </form>
                     <div id="passwordMessage" style="font-size:0.8rem; margin-top:0.3rem;"></div>
                 </div>
 
                 <!-- Logout -->
-                <div class="setting-item" style="padding: 1rem 0;">
-                    <button type="button" onclick="confirmLogout()" class="btn btn-outline text-danger w-100" style="color:var(--danger-color); border-color:var(--danger-color); background:none; cursor:pointer;">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </div>
+                <button type="button" onclick="confirmLogout()" style="display:flex; align-items:center; gap:0.75rem; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px; border:none; cursor:pointer; width:100%; text-align:left; color:var(--text-main);">
+                    <div style="width:36px; height:36px; border-radius:10px; background:#fdcb6e; display:flex; align-items:center; justify-content:center; color:white;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span style="font-weight:600; font-size:0.95rem;">Logout</span>
+                </button>
 
-                <!-- Delete Account -->
-                <div class="setting-item" style="padding: 1rem 0; border-top: 1px solid #f0f0f0;">
-                    <form action="DeleteAccountServlet" method="POST" onsubmit="return confirm('CRITICAL WARNING: This will permanently delete your account, all your posts, messages, and followers. This action CANNOT be undone. Are you absolutely sure?');">
-                        <button type="submit" class="btn btn-danger w-100" style="color:white; background-color:var(--danger-color); border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:600;">
+                <!-- Danger Zone: Delete Account -->
+                <div style="margin-top:0.5rem; border:2px solid var(--danger-color); border-radius:12px; padding:0.9rem 1rem; background:rgba(255,71,87,0.04);">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem; color:var(--danger-color); font-weight:700; font-size:0.85rem;">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </div>
+                    <form action="DeleteAccountServlet" method="POST" onsubmit="return confirm('⚠️ This will permanently delete your account, all posts, and messages. This CANNOT be undone. Are you sure?');">
+                        <button type="submit" style="width:100%; padding:0.65rem; background:var(--danger-color); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-size:0.9rem;">
                             <i class="fas fa-user-slash"></i> Delete Account Permanently
                         </button>
                     </form>

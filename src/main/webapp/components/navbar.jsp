@@ -167,11 +167,18 @@
 
 <!-- Share Post Modal (Global) -->
 <div id="sharePostModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:2000;">
-    <div class="modal-content card" style="max-width:400px; width:95%; padding:1.5rem; position:relative;">
-        <span class="close" onclick="closeShareModal()" style="position:absolute; top:15px; right:15px; font-size:1.5rem; cursor:pointer;">&times;</span>
-        <h3 style="margin-top:0; margin-bottom:1.25rem;">Share Post</h3>
-        <div id="share-friends-list" style="max-height: 300px; overflow-y: auto;">
-            <div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>
+    <div class="modal-content card" style="max-width:520px; width:95%; padding:0; position:relative; overflow:hidden; border-radius:16px;">
+        <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:1.1rem; font-weight:700;">Send Post To...</h3>
+            <button onclick="closeShareModal()" style="background:var(--bg-light); border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
+        </div>
+        <div id="share-friends-list" style="padding:1rem; max-height:360px; overflow-y:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
+            <div style="grid-column:1/-1; padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>
+        </div>
+        <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color); background:var(--bg-white);">
+            <button id="share-send-btn" onclick="sendPostShareToSelected()" class="btn btn-primary w-100" style="border-radius:8px; padding:0.6rem;">
+                <i class="far fa-paper-plane"></i> Send
+            </button>
         </div>
         <input type="hidden" id="share-post-id-input" value="">
     </div>

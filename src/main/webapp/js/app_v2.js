@@ -1,4 +1,4 @@
-// Core Application JavaScript
+﻿// Core Application JavaScript
 
 function getImageUrl(path) {
     if (!path) return (window.contextPath || '') + '/images/placeholder.png';
@@ -767,25 +767,33 @@ function saveEditCrop() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const fullImg = new Image();
+    fullImg.crossOrigin = 'anonymous';
     fullImg.onload = () => {
-        const dw = cropImg.offsetWidth * state.s * drawScale;
-        const dh = cropImg.offsetHeight * state.s * drawScale;
-        ctx.drawImage(fullImg, state.x * drawScale, state.y * drawScale, dw, dh);
-        
-        const blobUrl = canvas.toDataURL('image/jpeg', 0.9);
-        img.src = blobUrl;
-        
-        if (!editAdjustmentData[postId]) editAdjustmentData[postId] = {};
-        editAdjustmentData[postId][index] = {
-            ...state,
-            originalSrc: img.dataset.original || img.getAttribute('src').replace((window.contextPath || '') + '/', ''),
-            previewBlob: blobUrl,
-            adjusted: true
-        };
+        try {
+            const dw = cropImg.offsetWidth * state.s * drawScale;
+            const dh = cropImg.offsetHeight * state.s * drawScale;
+            ctx.drawImage(fullImg, state.x * drawScale, state.y * drawScale, dw, dh);
 
-        closeCropModal();
+            const blobUrl = canvas.toDataURL('image/jpeg', 0.9);
+            img.src = blobUrl;
+
+            if (!editAdjustmentData[postId]) editAdjustmentData[postId] = {};
+            editAdjustmentData[postId][index] = {
+                ...state,
+                originalSrc: img.dataset.original || img.getAttribute('src').replace((window.contextPath || '') + '/', ''),
+                previewBlob: blobUrl,
+                adjusted: true
+            };
+            closeCropModal();
+        } catch(e) {
+            // Canvas tainted fallback: just close and keep original
+            console.warn('Canvas tainted, adjustment not applied:', e);
+            alert('Could not apply adjustment to this image (CORS restriction). Try refreshing.');
+            closeCropModal();
+        }
     };
-    fullImg.src = cropImg.src;
+    fullImg.onerror = () => { alert('Failed to load image for adjustment.'); closeCropModal(); };
+    fullImg.src = cropImg.src + (cropImg.src.includes('?') ? '&' : '?') + '_cb=' + Date.now();
 }
 
 async function handleEditPostSubmit(e, postId) {
@@ -1138,6 +1146,11 @@ function removeFollow(targetId, btn) {
 // --- End follow request functions ---
 
 function toggleFollow(targetId, btn) {
+    // If currently following (btn-outline = Unfollow state), ask for confirmation
+    const wasFollowing = btn.classList.contains('btn-outline');
+    if (wasFollowing) {
+        if (!confirm('Are you sure you want to unfollow this user?')) return;
+    }
     fetch((window.contextPath || '') + '/FollowServlet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
