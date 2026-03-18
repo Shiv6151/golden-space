@@ -112,7 +112,7 @@
                                         <button class="btn btn-outline btn-sm" id="follow-action-btn" onclick="cancelFollowRequest('${profileUser.userId}', this)" style="background:var(--bg-light); color:var(--text-muted);">Requested</button>
                                     </c:when>
                                     <c:otherwise>
-                                        <button class="btn btn-primary btn-sm" id="follow-action-btn" onclick="sendFollowRequest('${profileUser.userId}', this)">Follow</button>
+                                        <button class="btn btn-primary btn-sm" id="follow-action-btn" onclick="sendFollowRequest('${profileUser.userId}', this, ${profileUser.privateAccount == true ? 'true' : 'false'})">Follow</button>
                                     </c:otherwise>
                                 </c:choose>
                                 <c:if test="${isMutualFollowing}">
@@ -132,7 +132,14 @@
                     <span id="followListTitle">Followers</span>
                     <button onclick="closeFollowListModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
                 </div>
-                <div id="followListBody" style="overflow-y:auto; padding:0.5rem 0;">
+                <!-- Search Bar for Follow List -->
+                <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-light);">
+                    <div style="position:relative;">
+                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.8rem;"></i>
+                        <input type="text" id="follow-list-search" placeholder="Search..." oninput="filterFollowList()" style="width:100%; padding:0.45rem 0.8rem 0.45rem 2.2rem; border:1px solid var(--border-color); border-radius:30px; font-size:0.85rem; background:var(--bg-white); font-family:inherit; outline:none; transition: all 0.2s; border:1px solid var(--border-color);" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='var(--border-color)'">
+                    </div>
+                </div>
+                <div id="followListBody" style="overflow-y:auto; padding:0.5rem 0; flex: 1; max-height: 50vh;">
                     <div style="padding:2rem; text-align:center; color:var(--text-muted);">Loading...</div>
                 </div>
             </div>

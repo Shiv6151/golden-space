@@ -329,19 +329,25 @@
                 top: 0; left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 10;
+                z-index: 100; /* Higher z-index for sidebar */
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-right: none;
                 background: var(--bg-white);
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto !important; /* Force scrollable */
+                -webkit-overflow-scrolling: touch;
             }
             .chat-main {
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 5;
+                z-index: 50;
                 transform: translateX(100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
             }
             body.chat-open .chat-sidebar {
                 width: 280px;
@@ -387,6 +393,7 @@
 </head>
 <body style="background-color: var(--bg-light); margin: 0; height: 100vh; overflow: hidden;">
     <jsp:include page="components/navbar.jsp" />
+    <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>
 
     <div class="chat-layout">
         <!-- Sidebar: Friend List -->
@@ -607,16 +614,24 @@
                                 if (html.includes('[POST_SHARE:')) {
                                     bubble.innerHTML = html.replace(/\[POST_SHARE:(\d+)\]/g, (match, p1) => {
                                         const uniqueId = 'share-' + p1 + '-' + Math.floor(Math.random() * 1000000);
-                                        // Use setTimeout to ensure the DOM is ready before calling render
+                                        // Wait a bit more to ensure scripts are loaded
                                         setTimeout(() => {
                                             const container = document.getElementById(uniqueId);
                                             if (container && typeof renderRichPostPreview === 'function') {
                                                 renderRichPostPreview(container, p1);
+                                            } else {
+                                                // Retry once if scripts are still loading
+                                                setTimeout(() => {
+                                                    const retryContainer = document.getElementById(uniqueId);
+                                                    if (retryContainer && typeof renderRichPostPreview === 'function') {
+                                                        renderRichPostPreview(retryContainer, p1);
+                                                    }
+                                                }, 500);
                                             }
-                                        }, 50);
+                                        }, 100);
                                         
-                                        return `<div id="${uniqueId}" style="margin: 0.5rem 0; width: 280px; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
-                                            <i class="fas fa-spinner fa-spin"></i>
+                                        return `<div id="${uniqueId}" style="margin: 0.5rem 0; width: 100%; max-width: 300px; min-height: 120px; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
+                                            <div style="text-align:center;"><i class="fas fa-spinner fa-spin" style="margin-bottom:8px;"></i><br><span style="font-size:0.75rem; color:var(--text-muted);">Loading post...</span></div>
                                         </div>`;
                                     });
                                 }

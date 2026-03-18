@@ -197,32 +197,32 @@ function renderRichPostPreview(container, postId) {
         const contentSnippet = post.postContent ? (post.postContent.length > 60 ? post.postContent.substring(0, 57) + '...' : post.postContent) : '';
         
         container.innerHTML = `
-            <div class="rich-post-share" onclick="openPostModal ? openPostModal(${postId}) : (window.location.href='FeedServlet?postId=${postId}')" style="cursor:pointer; background:var(--bg-white); width:100%;">
-                <div style="padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color);">
-                    <img src="${authorPhoto}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
-                    <span style="font-weight:700; font-size:0.85rem; color:var(--text-main);">@${post.userHandle}</span>
+            <div class="rich-post-share" onclick="typeof openPostModal === 'function' ? openPostModal(${postId}) : (window.location.href='FeedServlet?postId=${postId}')" style="cursor:pointer; background:var(--bg-white); width:100%; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border-color);">
+                <div style="padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); background: var(--bg-white);">
+                    <img src="${authorPhoto}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border: 1px solid var(--border-color);">
+                    <span style="font-weight:700; font-size:0.85rem; color:var(--text-main);">@${post.userHandle || 'user'}</span>
                 </div>
-                <div style="width:100%; aspect-ratio: 1/1; background:#000; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <div style="width:100%; aspect-ratio: 16/9; background:#000; overflow:hidden; display:flex; align-items:center; justify-content:center;">
                     <img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">
                 </div>
-                <div style="padding: 8px 12px; font-size: 0.85rem; color: var(--text-main); border-top: 1px solid var(--border-color);">
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        <span style="font-weight:700; margin-right:4px;">@${post.userHandle}</span>
+                <div style="padding: 10px 12px; font-size: 0.85rem; color: var(--text-main); border-top: none;">
+                    <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">
+                        <span style="font-weight:700; margin-right:4px;">@${post.userHandle || 'user'}</span>
                         <span>${contentSnippet}</span>
                     </div>
-                    <div style="margin-top: 4px; color: var(--primary-color); font-weight: 600; font-size: 0.75rem;">View Post</div>
+                    <div style="margin-top: 6px; color: var(--primary-color); font-weight: 600; font-size: 0.75rem;"><i class="fas fa-external-link-alt" style="font-size:0.7rem;"></i> View Full Post</div>
                 </div>
             </div>
         `;
         // Scroll adjustment if we are at bottom
         const cw = document.getElementById('chatWindow');
-        if (cw && Math.abs(cw.scrollTop + cw.clientHeight - cw.scrollHeight) < 200) {
-            cw.scrollTop = cw.scrollHeight;
+        if (cw && Math.abs(cw.scrollTop + cw.clientHeight - cw.scrollHeight) < 250) {
+            setTimeout(() => { cw.scrollTop = cw.scrollHeight; }, 50);
         }
     })
     .catch(err => {
         console.error('Error loading rich post preview:', err);
-        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Post not available</div>';
+        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;"><i class="fas fa-exclamation-circle"></i> Post not available</div>';
     });
 }
 
@@ -1415,6 +1415,78 @@ function toggleMessageReaction(messageId, emoji, event) {
     .catch(err => console.error('Message reaction error:', err));
 }
 
+function updateFollowCounts(targetId, action, isPrivate) {
+    const followersEl = document.getElementById('followers-count');
+    const followingEl = document.getElementById('following-count');
+    const currentProfileId = (window.currentProfileUserId || '').toString();
+    const loggedInId = (window.loggedInUserId || '').toString();
+
+    if (currentProfileId === targetId.toString()) {
+        if (followersEl) {
+            let count = parseInt(followersEl.innerText) || 0;
+            if (action === 'FOLLOW' && !isPrivate) followersEl.innerText = count + 1;
+            else if (action === 'UNFOLLOW') followersEl.innerText = Math.max(0, count - 1);
+        }
+    }
+    if (currentProfileId === loggedInId) {
+        if (followingEl) {
+            let count = parseInt(followingEl.innerText) || 0;
+            if (action === 'FOLLOW' && !isPrivate) followingEl.innerText = count + 1;
+            else if (action === 'UNFOLLOW') followingEl.innerText = Math.max(0, count - 1);
+        }
+    }
+}
+
+function sendFollowRequest(targetId, btn, isPrivate) {
+    if (btn) btn.disabled = true;
+    fetch((window.contextPath || '') + '/FollowServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=toggle&targetId=' + targetId
+    })
+    .then(res => {
+        if (btn) btn.disabled = false;
+        if (res.redirected) { window.location.reload(); return; }
+        updateFollowCounts(targetId, 'FOLLOW', isPrivate);
+        if (btn) {
+            if (isPrivate) {
+                btn.innerText = 'Requested';
+                btn.className = 'btn btn-outline btn-sm';
+                btn.style.background = 'var(--bg-light)';
+                btn.onclick = function() { cancelFollowRequest(targetId, btn); };
+            } else {
+                btn.innerText = 'Unfollow';
+                btn.className = 'btn btn-outline btn-sm';
+                btn.onclick = function() { removeFollow(targetId, btn); };
+            }
+        }
+    }).catch(() => { if (btn) btn.disabled = false; });
+}
+
+function removeFollow(targetId, btn) {
+    if (btn) btn.disabled = true;
+    fetch((window.contextPath || '') + '/FollowServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=toggle&targetId=' + targetId
+    })
+    .then(res => {
+        if (btn) btn.disabled = false;
+        if (res.redirected) { window.location.reload(); return; }
+        updateFollowCounts(targetId, 'UNFOLLOW');
+        if (btn) {
+            btn.innerText = 'Follow';
+            btn.className = 'btn btn-primary btn-sm';
+            btn.style.background = '';
+            btn.onclick = function() { sendFollowRequest(targetId, btn, false); };
+        }
+    }).catch(() => { if (btn) btn.disabled = false; });
+}
+
+function cancelFollowRequest(targetId, btn) {
+    removeFollow(targetId, btn);
+}
+
 function loadMessageReactions(messageId) {
     const display = document.getElementById('msg-reactions-' + messageId);
     if (!display) return;
@@ -1434,7 +1506,7 @@ function loadMessageReactions(messageId) {
         let html = '';
         data.forEach(r => {
             html += `
-                <div class="reaction-item" onclick="toggleMessageReaction(${messageId}, '${r.emoji}', event)">
+                <div class="reaction-item" onclick="toggleMessageReaction(${messageId}, '${r.emoji}', event)" style="cursor:pointer; background:var(--bg-light); border:1px solid var(--border-color); border-radius:12px; padding:2px 6px; font-size:0.8rem; display:inline-flex; align-items:center; gap:3px; margin-right:4px;">
                     <span>${r.emoji}</span>
                     <span style="font-weight:600;">${r.count}</span>
                 </div>
@@ -1450,15 +1522,17 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.emoji-picker-popup').forEach(p => p.style.display = 'none');
 });
 
-// --- Followers / Following List Modal ---
+window.currentFollowListOrig = [];
 function handleFollowClick(type, targetUserId, canSeePosts) {
     const modal = document.getElementById('followListModal');
     const title = document.getElementById('followListTitle');
     const body  = document.getElementById('followListBody');
+    const searchInput = document.getElementById('follow-list-search');
     if (!modal) return;
 
+    if (searchInput) searchInput.value = '';
     title.innerText = type === 'followers' ? 'Followers' : 'Following';
-    body.innerHTML  = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Loading...</div>';
+    body.innerHTML  = '<div style="padding:2rem; text-align:center; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
     modal.style.display = 'flex';
 
     var action = type === 'followers' ? 'getFollowers' : 'getFollowing';
@@ -1469,26 +1543,42 @@ function handleFollowClick(type, targetUserId, canSeePosts) {
     })
     .then(function(res) { return res.json(); })
     .then(function(users) {
-        if (!users || users.length === 0) {
-            body.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No ' + type + ' yet.</div>';
-            return;
-        }
-        var html = '';
-        users.forEach(function(u) {
-            var ctx   = window.contextPath || '';
-            var photo = getImageUrl(u.photo || 'images/default-avatar.png');
-            html += '<a href="' + ctx + '/ProfileServlet?id=' + u.userId + '" style="display:flex; align-items:center; gap:0.85rem; padding:0.75rem 1.25rem; text-decoration:none; color:inherit; transition:background 0.15s;" onmouseover="this.style.background=\'var(--bg-light)\'" onmouseout="this.style.background=\'transparent\'">' +
-                '<img src="' + photo + '" style="width:46px; height:46px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--border-color);">' +
-                '<div style="display:flex; flex-direction:column; gap:2px;">' +
-                    '<span style="font-weight:600; font-size:0.95rem;">@' + u.username + '</span>' +
-                '</div>' +
-            '</a>';
-        });
-        body.innerHTML = html;
+        window.currentFollowListOrig = users || [];
+        renderFollowList(window.currentFollowListOrig);
     })
     .catch(function() {
         body.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Could not load list.</div>';
     });
+}
+
+function filterFollowList() {
+    const query = document.getElementById('follow-list-search').value.toLowerCase();
+    const filtered = window.currentFollowListOrig.filter(u => 
+        (u.username && u.username.toLowerCase().includes(query)) || 
+        (u.name && u.name.toLowerCase().includes(query))
+    );
+    renderFollowList(filtered);
+}
+
+function renderFollowList(users) {
+    const body = document.getElementById('followListBody');
+    if (!users || users.length === 0) {
+        body.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No users found.</div>';
+        return;
+    }
+    var html = '';
+    users.forEach(function(u) {
+        var ctx   = window.contextPath || '';
+        var photo = getImageUrl(u.photo || 'images/default-avatar.png');
+        html += '<a href="' + ctx + '/ProfileServlet?id=' + u.userId + '" style="display:flex; align-items:center; gap:0.85rem; padding:0.75rem 1.25rem; text-decoration:none; color:inherit; transition:background 0.15s;" onmouseover="this.style.background=\'var(--bg-light)\'" onmouseout="this.style.background=\'transparent\'">' +
+            '<img src="' + photo + '" style="width:46px; height:46px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--border-color);">' +
+            '<div style="display:flex; flex-direction:column; gap:2px;">' +
+                '<span style="font-weight:600; font-size:0.95rem;">@' + (u.username || 'user') + '</span>' +
+                '<span style="font-size:0.75rem; color:var(--text-muted);">' + (u.name || '') + '</span>' +
+            '</div>' +
+        '</a>';
+    });
+    body.innerHTML = html;
 }
 
 function closeFollowListModal() {
