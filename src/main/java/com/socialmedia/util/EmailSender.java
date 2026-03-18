@@ -30,6 +30,11 @@ public class EmailSender {
         properties.put("mail.smtp.starttls.enable", "true");
         properties.put("mail.smtp.host", "smtp.gmail.com");
         properties.put("mail.smtp.port", "587");
+        
+        // Add timeouts to prevent hanging (10 seconds)
+        properties.put("mail.smtp.connectiontimeout", "10000");
+        properties.put("mail.smtp.timeout", "10000");
+        properties.put("mail.smtp.writetimeout", "10000");
 
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
@@ -37,6 +42,9 @@ public class EmailSender {
                 return new PasswordAuthentication(SMTP_EMAIL, SMTP_PASSWORD);
             }
         });
+        
+        // Enable debug logging to see SMTP handshake in Render logs
+        session.setDebug(true);
 
         try {
             Message message = new MimeMessage(session);
