@@ -529,8 +529,8 @@
                                             <img src="${chatUser.profilePhoto != null && chatUser.profilePhoto.startsWith('http') ? chatUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(chatUser.profilePhoto != null ? chatUser.profilePhoto : 'images/default-avatar.png')}" class="msg-avatar">
                                         </c:if>
                                         <div class="message-bubble ${msg.senderId == sessionScope.user.userId ? 'message-sent' : 'message-received'}" data-id="${msg.messageId}" style="margin-bottom: 0px; max-width: 80%; width: fit-content;">
-                                            <div class="react-msg-btn" title="React" onclick="toggleEmojiPicker('${msg.messageId}', event)">
-                                                <i class="far fa-smile"></i>
+                                            <div class="react-msg-btn" title="React" onclick="toggleEmojiPicker('${msg.messageId}', event)" style="font-size: 1.1rem; opacity: 0.6; transition: opacity 0.2s;">
+                                                😊
                                             </div>
                                             <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup">
                                                 <span onclick="toggleMessageReaction('${msg.messageId}', '❤️', event)">❤️</span>
@@ -538,6 +538,8 @@
                                                 <span onclick="toggleMessageReaction('${msg.messageId}', '😂', event)">😂</span>
                                                 <span onclick="toggleMessageReaction('${msg.messageId}', '😮', event)">😮</span>
                                                 <span onclick="toggleMessageReaction('${msg.messageId}', '👏', event)">👏</span>
+                                                <span onclick="toggleMessageReaction('${msg.messageId}', '🙌', event)">🙌</span>
+                                                <span onclick="toggleMessageReaction('${msg.messageId}', '😢', event)">😢</span>
                                             </div>
                                             <c:if test="${msg.senderId == sessionScope.user.userId}">
                                                 <form action="MessageServlet" method="POST" style="margin:0;">

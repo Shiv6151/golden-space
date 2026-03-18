@@ -1476,9 +1476,9 @@ function handleFollowClick(type, targetUserId, canSeePosts) {
         var html = '';
         users.forEach(function(u) {
             var ctx   = window.contextPath || '';
-            var photo = u.photo ? u.photo : 'images/default-avatar.png';
+            var photo = getImageUrl(u.photo || 'images/default-avatar.png');
             html += '<a href="' + ctx + '/ProfileServlet?id=' + u.userId + '" style="display:flex; align-items:center; gap:0.85rem; padding:0.75rem 1.25rem; text-decoration:none; color:inherit; transition:background 0.15s;" onmouseover="this.style.background=\'var(--bg-light)\'" onmouseout="this.style.background=\'transparent\'">' +
-                '<img src="' + ctx + '/' + photo + '" style="width:46px; height:46px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--border-color);">' +
+                '<img src="' + photo + '" style="width:46px; height:46px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--border-color);">' +
                 '<div style="display:flex; flex-direction:column; gap:2px;">' +
                     '<span style="font-weight:600; font-size:0.95rem;">@' + u.username + '</span>' +
                 '</div>' +
