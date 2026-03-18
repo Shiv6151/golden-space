@@ -192,15 +192,11 @@
         <span style="cursor:pointer;" onclick="toggleComments('${post.postId}')">${post.commentCount} Comments <i class="fas fa-chevron-down"></i></span>
     </div>
     
-    <div class="post-actions border-top" style="display:flex; justify-content:space-between; padding-top:0.5rem; margin-top:0.5rem;">
-        <button type="button" class="action-btn text-muted" 
-                onclick="toggleLike('${post.postId}')" 
-                id="like-btn-${post.postId}" 
-                style="flex:1; text-align:center; border:none; background:none; font-weight: 600;">
-            <i class="fas fa-heart" id="like-icon-${post.postId}" style="color: ${post.likedByCurrentUser ? '#ff4757' : 'inherit'};"></i> Like
-        </button>
         <button type="button" class="action-btn text-muted" onclick="toggleComments('${post.postId}')" style="flex:1; text-align:center;">
             <i class="fas fa-comment ms-2"></i> Comment
+        </button>
+        <button type="button" class="action-btn text-muted" onclick="openShareModal('${post.postId}')" style="flex:1; text-align:center;">
+            <i class="far fa-paper-plane ms-2"></i> Share
         </button>
     </div>
     

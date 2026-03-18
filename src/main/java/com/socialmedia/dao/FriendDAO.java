@@ -17,7 +17,10 @@ public class FriendDAO {
             stmt.setInt(1, userId);
             stmt.setInt(2, friendId);
             
-            return stmt.executeUpdate() > 0;
+            if (stmt.executeUpdate() > 0) {
+                new NotificationDAO().addNotification(friendId, userId, "FRIEND_REQUEST", null);
+                return true;
+            }
             
         } catch (SQLException e) {
             e.printStackTrace();

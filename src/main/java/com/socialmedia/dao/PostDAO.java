@@ -342,7 +342,12 @@ public class PostDAO {
                     insStmt.setInt(1, postId);
                     insStmt.setInt(2, userId);
                     insStmt.setString(3, emoji);
-                    insStmt.executeUpdate();
+                    if (insStmt.executeUpdate() > 0) {
+                        Post p = getPostById(postId, userId);
+                        if (p != null) {
+                            new NotificationDAO().addNotification(p.getUserId(), userId, "LIKE", postId);
+                        }
+                    }
                 }
                 return true;
             }
@@ -366,6 +371,43 @@ public class PostDAO {
             e.printStackTrace();
         }
         return reactions;
+    }
+
+    public List<Post> searchPostsByHashtag(String hashtag, int currentUserId) {
+        List<Post> posts = new ArrayList<>();
+        String query = 
+            "SELECT p.*, u.name, u.username, u.profile_photo, " +
+            "(SELECT COUNT(*) FROM Likes WHERE post_id = p.post_id) AS like_count, " +
+            "(SELECT COUNT(*) FROM Comments WHERE post_id = p.post_id) AS comment_count, " +
+            "(SELECT COUNT(*) FROM Likes WHERE post_id = p.post_id AND user_id = ?) " +
+            "AS is_liked_by_me " +
+            "FROM Posts p " +
+            "JOIN Users u ON p.user_id = u.user_id " +
+            "WHERE p.post_content LIKE ? " +
+            "AND (u.is_private = 0 OR p.user_id = ? OR " +
+            "     p.user_id IN (SELECT following_id FROM followers WHERE follower_id = ?)) " +
+            "ORDER BY p.post_date DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+             
+            stmt.setInt(1, currentUserId);
+            
+            // Allow user to search "new" and match `#new`
+            String searchPattern = hashtag.startsWith("#") ? "%" + hashtag + "%" : "%#" + hashtag + "%";
+            stmt.setString(2, searchPattern);
+            
+            stmt.setInt(3, currentUserId);
+            stmt.setInt(4, currentUserId);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                posts.add(extractPostFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return posts;
     }
 
     private Post extractPostFromResultSet(ResultSet rs) throws SQLException {

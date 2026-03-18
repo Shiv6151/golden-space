@@ -8,6 +8,82 @@ function getImageUrl(path) {
     return (window.contextPath || '') + '/' + path;
 }
 
+// ----------------------------------------------------
+// Share Post Functionality
+// ----------------------------------------------------
+function openShareModal(postId) {
+    document.getElementById('share-post-id-input').value = postId;
+    document.getElementById('sharePostModal').style.display = 'flex';
+    document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>';
+    
+    fetch((window.contextPath || '') + '/InteractionServlet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'action=getAcceptedFriends'
+    })
+    .then(res => res.json())
+    .then(friends => {
+        let html = '';
+        if (friends.length === 0) {
+            html = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No friends available to share with.</div>';
+        } else {
+            friends.forEach(f => {
+                const photo = getImageUrl(f.photo);
+                html += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border-bottom:1px solid var(--border-color);">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <img src="\${photo}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                            <span style="font-weight:600;">\${f.name}</span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="sendPostShare(\${f.id}, this)">Send</button>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('share-friends-list').innerHTML = html;
+    }).catch(err => {
+        document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--danger-color);">Error loading friends</div>';
+    });
+}
+
+function closeShareModal() {
+    document.getElementById('sharePostModal').style.display = 'none';
+}
+
+function sendPostShare(friendId, btn) {
+    const postId = document.getElementById('share-post-id-input').value;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    const formData = new URLSearchParams();
+    formData.append('receiverId', friendId);
+    formData.append('messageText', '[POST_SHARE:' + postId + ']');
+    formData.append('ajax', 'true');
+    
+    fetch((window.contextPath || '') + '/MessageServlet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData.toString()
+    })
+    .then(res => {
+        if (res.ok) {
+            btn.innerText = 'Sent';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary');
+            btn.style.background = '#2ecc71';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+        } else {
+            btn.innerText = 'Error';
+            btn.disabled = false;
+        }
+    })
+    .catch(() => {
+        btn.innerText = 'Send';
+        btn.disabled = false;
+    });
+}
+
 function toggleLike(postId, showAnimation = false) {
     const btn = document.getElementById('like-btn-' + postId);
     const icon = document.getElementById('like-icon-' + postId);

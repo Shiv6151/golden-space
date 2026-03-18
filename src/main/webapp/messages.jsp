@@ -444,6 +444,38 @@
                                                     </button>
                                                 </form>
                                             </c:if>
+
+                                            <!-- ATTACHMENT RENDERING -->
+                                            <c:if test="${not empty msg.attachmentUrl}">
+                                                <div style="margin-bottom: 8px;">
+                                                    <c:choose>
+                                                        <c:when test="${msg.attachmentType == 'image'}">
+                                                            <a href="${msg.attachmentUrl}" target="_blank">
+                                                                <img src="${msg.attachmentUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                            </a>
+                                                        </c:when>
+                                                        <c:when test="${msg.attachmentType == 'video'}">
+                                                            <video controls style="max-width: 100%; max-height: 250px; border-radius: 8px;">
+                                                                <source src="${msg.attachmentUrl}" type="video/mp4">
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                        </c:when>
+                                                        <c:when test="${msg.attachmentType == 'pdf'}">
+                                                            <a href="${msg.attachmentUrl}" target="_blank" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 8px;">
+                                                                <i class="fas fa-file-pdf" style="font-size: 1.5rem; color: #e25555;"></i>
+                                                                <span style="text-decoration: underline;">View Document</span>
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${msg.attachmentUrl}" target="_blank" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 8px;">
+                                                                <i class="fas fa-file" style="font-size: 1.5rem;"></i>
+                                                                <span style="text-decoration: underline;">Open File</span>
+                                                            </a>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+                                            </c:if>
+
                                             ${msg.messageText}
                                             <div class="msg-time"><fmt:formatDate value="${msg.messageTime}" pattern="hh:mm a" /></div>
                                             <div id="msg-reactions-${msg.messageId}" class="msg-reactions"></div>
@@ -457,6 +489,22 @@
                             document.querySelectorAll('.message-bubble').forEach(bubble => {
                                 const id = bubble.getAttribute('data-id');
                                 if (id) loadMessageReactions(id);
+                                
+                                // Intercept [POST_SHARE:X] tags and render as interactive cards
+                                let html = bubble.innerHTML;
+                                if (html.includes('[POST_SHARE:')) {
+                                    bubble.innerHTML = html.replace(/\[POST_SHARE:(\d+)\]/g, (match, p1) => {
+                                        return `<div class="shared-post-card" onclick="openPostModal(${p1})" style="cursor:pointer; background:var(--bg-light); border:1px solid var(--border-color); padding:0.75rem 1rem; border-radius:8px; display:inline-flex; align-items:center; gap:0.75rem; color:var(--text-color); margin: 0.25rem 0;">
+                                            <div style="background:rgba(255, 71, 87, 0.1); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--primary-color);">
+                                                <i class="fas fa-camera-retro fa-lg"></i>
+                                            </div>
+                                            <div style="text-align:left;">
+                                                <strong style="display:block; font-size: 0.95rem;">Shared Post</strong>
+                                                <span style="font-size:0.8rem; color:var(--text-muted); text-decoration:underline;">Click to view in feed</span>
+                                            </div>
+                                        </div>`;
+                                    });
+                                }
                             });
                         </script>
                     </div>
@@ -465,15 +513,83 @@
                     <input type="hidden" id="currentChatUserId" value="${chatUser.userId}">
                     <input type="hidden" id="currentUserId" value="${sessionScope.user.userId}">
                     
-                    <div class="chat-input-area">
-                        <form action="MessageServlet" method="POST" class="chat-form">
+                    <div class="chat-input-area" style="position: relative;">
+                        <!-- Preview container -->
+                        <div id="attachment-preview-container" style="display: none; padding: 8px 12px; background: var(--bg-light); border-radius: 8px; margin-bottom: 8px; align-items: center; justify-content: space-between; border: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i id="attachment-preview-icon" class="fas fa-file text-muted"></i>
+                                <span id="attachment-preview-name" style="font-size: 0.9rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; max-width: 200px; white-space: nowrap;"></span>
+                            </div>
+                            <button type="button" onclick="clearChatAttachment()" style="background: none; border: none; cursor: pointer; color: var(--danger-color); padding: 4px;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <form action="MessageServlet" method="POST" class="chat-form" enctype="multipart/form-data" id="chatFormObject">
                             <input type="hidden" name="receiverId" value="${chatUser.userId}">
-                            <input type="text" name="messageText" class="form-input" placeholder="Type a message..." required autocomplete="off" style="flex: 1; border-radius: 2rem;">
-                            <button type="submit" class="btn btn-primary" style="border-radius: 50%; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center;">
-                                <i class="fas fa-paper-plane"></i>
+                            
+                            <input type="file" name="attachment" id="chat-attachment" accept="image/*,video/*,application/pdf" style="display: none;" onchange="handleChatAttachmentPreview(this)">
+                            
+                            <button type="button" class="btn btn-outline" style="border-radius: 50%; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; border: none; background: var(--bg-light); color: var(--primary-color);" onclick="document.getElementById('chat-attachment').click()" title="Attach File">
+                                <i class="fas fa-plus"></i>
+                            </button>
+
+                            <input type="text" name="messageText" class="form-input" placeholder="Type a message..." autocomplete="off" style="flex: 1; border-radius: 2rem;">
+                            
+                            <button type="submit" class="btn btn-primary" style="border-radius: 50%; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center;" onclick="showSendingIndicator(this)">
+                                <i class="fas fa-paper-plane" id="chat-send-icon"></i>
                             </button>
                         </form>
                     </div>
+
+                    <!-- Client-Side Attachment Preview Logic -->
+                    <script>
+                        function handleChatAttachmentPreview(input) {
+                            const container = document.getElementById('attachment-preview-container');
+                            const nameSpan = document.getElementById('attachment-preview-name');
+                            const icon = document.getElementById('attachment-preview-icon');
+                            
+                            if (input.files && input.files[0]) {
+                                const file = input.files[0];
+                                nameSpan.innerText = file.name;
+                                
+                                // Set icon based on type
+                                icon.className = 'fas text-muted';
+                                if (file.type.startsWith('image/')) {
+                                    icon.classList.add('fa-image');
+                                } else if (file.type.startsWith('video/')) {
+                                    icon.classList.add('fa-video');
+                                } else if (file.type === 'application/pdf') {
+                                    icon.classList.add('fa-file-pdf');
+                                    icon.style.color = '#e25555';
+                                } else {
+                                    icon.classList.add('fa-file');
+                                }
+                                
+                                container.style.display = 'flex';
+                            } else {
+                                container.style.display = 'none';
+                            }
+                        }
+                        
+                        function clearChatAttachment() {
+                            const input = document.getElementById('chat-attachment');
+                            input.value = '';
+                            document.getElementById('attachment-preview-container').style.display = 'none';
+                        }
+
+                        function showSendingIndicator(btn) {
+                            const form = document.getElementById('chatFormObject');
+                            const msgInput = form.querySelector('input[name="messageText"]');
+                            const fileInput = form.querySelector('input[name="attachment"]');
+                            
+                            // Only show loading if there is actually data to send
+                            if ((msgInput.value && msgInput.value.trim() !== '') || (fileInput.files && fileInput.files.length > 0)) {
+                                const icon = document.getElementById('chat-send-icon');
+                                icon.className = 'fas fa-spinner fa-spin';
+                            }
+                        }
+                    </script>
                     
                     <!-- Scroll to bottom script -->
                     <script>

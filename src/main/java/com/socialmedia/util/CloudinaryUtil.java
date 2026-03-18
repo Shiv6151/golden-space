@@ -48,7 +48,7 @@ public class CloudinaryUtil {
 
             // Upload the file to Cloudinary
             @SuppressWarnings("unchecked")
-            Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(tempFile, ObjectUtils.emptyMap());
+            Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(tempFile, ObjectUtils.asMap("resource_type", "auto"));
             tempFile.delete(); // Delete temp file
 
             return (String) uploadResult.get("secure_url");

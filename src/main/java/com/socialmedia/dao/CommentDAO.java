@@ -18,7 +18,13 @@ public class CommentDAO {
             stmt.setInt(2, comment.getUserId());
             stmt.setString(3, comment.getCommentText());
             
-            return stmt.executeUpdate() > 0;
+            if (stmt.executeUpdate() > 0) {
+                 com.socialmedia.model.Post p = new PostDAO().getPostById(comment.getPostId(), comment.getUserId());
+                 if (p != null) {
+                     new NotificationDAO().addNotification(p.getUserId(), comment.getUserId(), "COMMENT", comment.getPostId());
+                 }
+                 return true;
+            }
             
         } catch (SQLException e) {
             e.printStackTrace();

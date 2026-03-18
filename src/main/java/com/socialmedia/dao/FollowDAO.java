@@ -52,6 +52,7 @@ public class FollowDAO {
             // Follow
             String query = "INSERT INTO followers (follower_id, following_id) VALUES (?, ?)";
             executeUpdate(query, followerId, followingId);
+            new NotificationDAO().addNotification(followingId, followerId, "FOLLOW", null);
             return true;
         }
     }

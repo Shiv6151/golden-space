@@ -10,9 +10,9 @@
 }
 
 .nav-container {
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 1rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -344,6 +344,38 @@
     .ig-stats-row {
         justify-content: center;
         gap: 1.5rem;
+    }
+    .nav-container {
+        padding: 0.5rem 1rem;
+    }
+    .premium-search-bar {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 600px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .nav-left {
+        display: none !important; /* Hide empty left div on mobile */
+    }
+    .nav-center {
+        width: 100%;
+        order: 2; /* Move search below icons */
+    }
+    .premium-search-bar {
+        max-width: 100%;
+    }
+    .nav-right {
+        width: 100%;
+        justify-content: space-between !important;
+        gap: 0 !important;
+        order: 1; /* Icons on top */
+    }
+    .main-container {
+        margin: 1rem auto;
     }
 }
 

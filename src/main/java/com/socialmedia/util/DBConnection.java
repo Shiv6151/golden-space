@@ -1,7 +1,9 @@
 package com.socialmedia.util;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
@@ -12,16 +14,32 @@ public class DBConnection {
     private static final String PASSWORD = System.getenv("DB_PASSWORD") != null ? 
             System.getenv("DB_PASSWORD") : "JMzneMBgllqC0VOW";
 
+    private static HikariDataSource dataSource;
+
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(URL);
+            config.setUsername(USERNAME);
+            config.setPassword(PASSWORD);
+            
+            // Pool configuration for high performance
+            config.setMaximumPoolSize(10);
+            config.setMinimumIdle(2);
+            config.setIdleTimeout(30000); // 30 seconds
+            config.setMaxLifetime(1800000); // 30 minutes
+            config.setConnectionTimeout(10000); // 10 seconds timeout
+            
+            dataSource = new HikariDataSource(config);
+            System.out.println("HikariCP Database Connection Pool initialized.");
+        } catch (Exception e) {
+            System.err.println("Fatal Error: Could not initialize database connection pool.");
             e.printStackTrace();
         }
     }
 
     public static Connection getConnection() throws SQLException {
-        System.out.println("Trying to connect to database at: " + URL);
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        return dataSource.getConnection();
     }
 }

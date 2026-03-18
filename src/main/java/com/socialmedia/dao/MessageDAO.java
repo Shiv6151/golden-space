@@ -10,13 +10,15 @@ import java.util.List;
 public class MessageDAO {
 
     public boolean sendMessage(Message message) {
-        String query = "INSERT INTO Messages (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
+        String query = "INSERT INTO Messages (sender_id, receiver_id, message_text, attachment_url, attachment_type) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
             stmt.setInt(1, message.getSenderId());
             stmt.setInt(2, message.getReceiverId());
             stmt.setString(3, message.getMessageText());
+            stmt.setString(4, message.getAttachmentUrl());
+            stmt.setString(5, message.getAttachmentType());
             
             return stmt.executeUpdate() > 0;
             
@@ -54,6 +56,8 @@ public class MessageDAO {
                 msg.setRead(rs.getBoolean("is_read"));
                 msg.setSenderName(rs.getString("name"));
                 msg.setSenderPhoto(rs.getString("profile_photo"));
+                msg.setAttachmentUrl(rs.getString("attachment_url"));
+                msg.setAttachmentType(rs.getString("attachment_type"));
                 messages.add(msg);
             }
         } catch (SQLException e) {
@@ -92,6 +96,8 @@ public class MessageDAO {
                 msg.setRead(rs.getBoolean("is_read"));
                 msg.setSenderName(rs.getString("name"));
                 msg.setSenderPhoto(rs.getString("profile_photo"));
+                msg.setAttachmentUrl(rs.getString("attachment_url"));
+                msg.setAttachmentType(rs.getString("attachment_type"));
                 messages.add(msg);
             }
         } catch (SQLException e) {

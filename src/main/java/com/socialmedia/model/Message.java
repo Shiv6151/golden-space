@@ -9,6 +9,8 @@ public class Message {
     private String messageText;
     private Timestamp messageTime;
     private boolean isRead;
+    private String attachmentUrl;
+    private String attachmentType;
 
     // For display
     private String senderName;
@@ -39,4 +41,10 @@ public class Message {
 
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { isRead = read; }
+
+    public String getAttachmentUrl() { return attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+
+    public String getAttachmentType() { return attachmentType; }
+    public void setAttachmentType(String attachmentType) { this.attachmentType = attachmentType; }
 }

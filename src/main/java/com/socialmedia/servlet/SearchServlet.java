@@ -37,9 +37,14 @@ public class SearchServlet extends HttpServlet {
         if (query != null && !query.trim().isEmpty()) {
             List<User> searchResults = userDAO.searchUsersByName(query, currentUser.getUserId());
             request.setAttribute("searchResults", searchResults);
+            
+            com.socialmedia.dao.PostDAO postDAO = new com.socialmedia.dao.PostDAO();
+            java.util.List<com.socialmedia.model.Post> postResults = postDAO.searchPostsByHashtag(query, currentUser.getUserId());
+            request.setAttribute("postResults", postResults);
+            
             request.setAttribute("searchQuery", query);
         }
 
-        request.getRequestDispatcher("search_results.jsp").forward(request, response);
+        request.getRequestDispatcher("search.jsp").forward(request, response);
     }
 }

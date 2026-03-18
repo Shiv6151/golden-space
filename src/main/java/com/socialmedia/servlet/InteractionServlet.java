@@ -6,6 +6,8 @@ import com.socialmedia.dao.FriendDAO;
 import com.socialmedia.dao.UserDAO;
 import com.socialmedia.model.Comment;
 import com.socialmedia.model.User;
+import com.socialmedia.dao.NotificationDAO;
+import com.socialmedia.model.Notification;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,6 +27,7 @@ public class InteractionServlet extends HttpServlet {
     private FriendDAO friendDAO;
     private UserDAO userDAO;
     private com.socialmedia.dao.MessageDAO messageDAO;
+    private NotificationDAO notificationDAO;
 
     @Override
     public void init() {
@@ -34,6 +37,7 @@ public class InteractionServlet extends HttpServlet {
         friendDAO = new FriendDAO();
         userDAO = new UserDAO();
         messageDAO = new com.socialmedia.dao.MessageDAO();
+        notificationDAO = new NotificationDAO();
     }
 
     @Override
@@ -71,9 +75,10 @@ public class InteractionServlet extends HttpServlet {
         } else if ("checkPendingRequests".equals(action)) {
             int friendRequests = friendDAO.getPendingRequestsCount(currentUser.getUserId());
             int unreadMessages = new com.socialmedia.dao.MessageDAO().getUnreadCount(currentUser.getUserId());
+            int unreadNotifications = notificationDAO.getUnreadCount(currentUser.getUserId());
             response.setContentType("application/json");
             PrintWriter out = response.getWriter();
-            out.print("{\"count\": " + (friendRequests + unreadMessages) + ", \"friendRequests\": " + friendRequests + ", \"unreadMessages\": " + unreadMessages + "}");
+            out.print("{\"count\": " + (friendRequests + unreadMessages + unreadNotifications) + ", \"friendRequests\": " + friendRequests + ", \"unreadMessages\": " + unreadMessages + ", \"unreadNotifications\": " + unreadNotifications + "}");
             out.flush();
             
         } else if ("getLikers".equals(action)) {
@@ -248,6 +253,7 @@ public class InteractionServlet extends HttpServlet {
             out.print("]");
             out.flush();
         } else if ("getPendingFriendRequests".equals(action)) {
+            // Keeping for backwards compatibility if needed, but we now use getNotifications
             java.util.List<com.socialmedia.model.Friend> pending = friendDAO.getPendingRequests(currentUser.getUserId());
             response.setContentType("application/json");
             PrintWriter out = response.getWriter();
@@ -261,6 +267,51 @@ public class InteractionServlet extends HttpServlet {
                 out.print("\"photo\": \"" + p + "\"");
                 out.print("}");
                 if (i < pending.size() - 1) out.print(",");
+            }
+            out.print("]");
+            out.flush();
+        } else if ("getNotifications".equals(action)) {
+            java.util.List<Notification> notifications = notificationDAO.getRecentNotifications(currentUser.getUserId());
+            response.setContentType("application/json");
+            PrintWriter out = response.getWriter();
+            out.print("[");
+            for (int i = 0; i < notifications.size(); i++) {
+                Notification n = notifications.get(i);
+                String p = n.getActorPhoto() != null ? n.getActorPhoto() : "images/default-avatar.png";
+                out.print("{");
+                out.print("\"id\": " + n.getId() + ",");
+                out.print("\"actorId\": " + n.getActorId() + ",");
+                out.print("\"actorName\": \"" + n.getActorName().replace("\"", "\\\"") + "\",");
+                out.print("\"actorPhoto\": \"" + p + "\",");
+                out.print("\"type\": \"" + n.getType() + "\",");
+                out.print("\"targetId\": " + (n.getTargetId() != null ? n.getTargetId() : "null") + ",");
+                out.print("\"isRead\": " + n.isRead() + ",");
+                out.print("\"time\": \"" + n.getCreatedAt().toString() + "\"");
+                out.print("}");
+                if (i < notifications.size() - 1) out.print(",");
+            }
+            out.print("]");
+            out.flush();
+        } else if ("markNotificationsRead".equals(action)) {
+            boolean success = notificationDAO.markAllAsRead(currentUser.getUserId());
+            response.setContentType("application/json");
+            PrintWriter out = response.getWriter();
+            out.print("{\"success\": " + success + "}");
+            out.flush();
+        } else if ("getAcceptedFriends".equals(action)) {
+            java.util.List<com.socialmedia.model.Friend> friends = friendDAO.getAcceptedFriends(currentUser.getUserId());
+            response.setContentType("application/json");
+            PrintWriter out = response.getWriter();
+            out.print("[");
+            for (int i = 0; i < friends.size(); i++) {
+                com.socialmedia.model.Friend f = friends.get(i);
+                String p = f.getFriendPhoto() != null ? f.getFriendPhoto() : "images/default-avatar.png";
+                out.print("{");
+                out.print("\"id\": " + f.getFriendId() + ",");
+                out.print("\"name\": \"" + f.getFriendName().replace("\"", "\\\"") + "\",");
+                out.print("\"photo\": \"" + p + "\"");
+                out.print("}");
+                if (i < friends.size() - 1) out.print(",");
             }
             out.print("]");
             out.flush();

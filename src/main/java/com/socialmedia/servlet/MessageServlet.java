@@ -3,12 +3,14 @@ package com.socialmedia.servlet;
 import com.socialmedia.dao.FollowDAO;
 import com.socialmedia.dao.FriendDAO;
 import com.socialmedia.dao.MessageDAO;
+import com.socialmedia.dao.NotificationDAO;
 import com.socialmedia.dao.UserDAO;
 import com.socialmedia.model.Friend;
 import com.socialmedia.model.Message;
 import com.socialmedia.model.User;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,14 +18,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet("/MessageServlet")
+@MultipartConfig(maxFileSize = 50 * 1024 * 1024) // 50MB max file size
 public class MessageServlet extends HttpServlet {
 
     private MessageDAO messageDAO;
     private FollowDAO followDAO;
     private FriendDAO friendDAO;
     private UserDAO userDAO;
+    private NotificationDAO notificationDAO;
 
     @Override
     public void init() {
@@ -31,6 +37,7 @@ public class MessageServlet extends HttpServlet {
         followDAO = new FollowDAO();
         friendDAO = new FriendDAO();
         userDAO = new UserDAO();
+        notificationDAO = new NotificationDAO();
     }
 
     @Override
@@ -99,10 +106,16 @@ public class MessageServlet extends HttpServlet {
                 StringBuilder json = new StringBuilder("[");
                 for (int i = 0; i < newMessages.size(); i++) {
                     Message m = newMessages.get(i);
+                    String attachUrl = m.getAttachmentUrl() != null ? "\"" + m.getAttachmentUrl() + "\"" : "null";
+                    String attachType = m.getAttachmentType() != null ? "\"" + m.getAttachmentType() + "\"" : "null";
+                    String text = m.getMessageText() != null ? m.getMessageText().replace("\"", "\\\"").replace("\n", "\\n") : "";
+                    
                     json.append("{")
                         .append("\"id\":").append(m.getMessageId()).append(",")
                         .append("\"senderId\":").append(m.getSenderId()).append(",")
-                        .append("\"text\":\"").append(m.getMessageText().replace("\"", "\\\"").replace("\n", "\\n")).append("\",")
+                        .append("\"text\":\"").append(text).append("\",")
+                        .append("\"attachmentUrl\":").append(attachUrl).append(",")
+                        .append("\"attachmentType\":").append(attachType).append(",")
                         .append("\"time\":\"").append(m.getMessageTime()).append("\"")
                         .append("}");
                     if (i < newMessages.size() - 1) json.append(",");
@@ -150,20 +163,64 @@ public class MessageServlet extends HttpServlet {
         try {
             int receiverId = Integer.parseInt(request.getParameter("receiverId"));
             
-            if (messageText != null && !messageText.trim().isEmpty()) {
-                Message msg = new Message();
-                msg.setSenderId(currentUser.getUserId());
-                msg.setReceiverId(receiverId);
-                msg.setMessageText(messageText);
-                
+            Message msg = new Message();
+            msg.setSenderId(currentUser.getUserId());
+            msg.setReceiverId(receiverId);
+            msg.setMessageText(messageText);
+            
+            // Handle file upload
+            jakarta.servlet.http.Part filePart = null;
+            try {
+                filePart = request.getPart("attachment");
+            } catch (Exception e) {}
+            
+            if (filePart != null && filePart.getSize() > 0) {
+                String contentType = filePart.getContentType();
+                String type = "unknown";
+                if (contentType != null) {
+                    if (contentType.startsWith("image/")) type = "image";
+                    else if (contentType.startsWith("video/")) type = "video";
+                    else if (contentType.equals("application/pdf")) type = "pdf";
+                }
+                String url = com.socialmedia.util.CloudinaryUtil.upload(filePart);
+                if (url != null) {
+                    msg.setAttachmentUrl(url);
+                    msg.setAttachmentType(type);
+                }
+            }
+            
+            if ((messageText != null && !messageText.trim().isEmpty()) || msg.getAttachmentUrl() != null) {
                 messageDAO.sendMessage(msg);
+                
+                // If this is a post share, fire a SHARE notification for the receiver
+                if (messageText != null) {
+                    Pattern p = Pattern.compile("\\[POST_SHARE:(\\d+)\\]");
+                    Matcher m = p.matcher(messageText);
+                    if (m.find()) {
+                        try {
+                            int sharedPostId = Integer.parseInt(m.group(1));
+                            notificationDAO.addNotification(receiverId, currentUser.getUserId(), "SHARE", sharedPostId);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+            
+            // If AJAX, we don't need to redirect
+            if ("true".equals(request.getParameter("ajax"))) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                return;
             }
             
             // Redirect back to conversation
             response.sendRedirect("MessageServlet?with=" + receiverId);
             
         } catch (NumberFormatException | NullPointerException e) {
-            response.sendRedirect("MessageServlet");
+            if (!"true".equals(request.getParameter("ajax"))) {
+                response.sendRedirect("MessageServlet");
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
         }
     }
 }
+

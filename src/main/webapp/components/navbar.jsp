@@ -7,16 +7,15 @@
     })();
 </script>
 <nav class="navbar">
-    <div class="nav-container" style="display:flex; justify-content:space-between; align-items:center; max-width: 1200px; margin: 0 auto; width: 100%;">
-        <div style="flex: 1; display:flex; justify-content:flex-start;">
-            <a href="FeedServlet" class="nav-brand" style="text-decoration: none; font-size: 1.5rem; font-weight: 800; color: var(--primary-color); letter-spacing: -1px;">GoldenSpace</a>
+    <div class="nav-container">
+        <div class="nav-left" style="flex: 1; display:flex; justify-content:flex-start;">
+            <!-- Brand text removed as requested -->
         </div>
         
         <div class="nav-center" style="flex: 1.5; display: flex; justify-content: center;">
-            <form action="${pageContext.request.contextPath}/SearchServlet" method="GET" class="premium-search-bar" id="searchForm">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" name="query" id="searchInput" placeholder="Search friends or posts..." required>
-            </form>
+            <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link" title="Search" style="background: var(--bg-light); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-search"></i>
+            </a>
         </div>
         
         <div class="nav-right" style="flex: 1; display:flex; justify-content:flex-end; align-items:center; gap: 2rem;">
@@ -48,9 +47,6 @@
             </a>
         </div>
 
-        <div style="flex: 1; display:flex; justify-content:flex-end; align-items:center;">
-            <!-- Placeholder to balance the flexbox layout -->
-        </div>
     </div>
 </nav>
 
@@ -77,7 +73,7 @@
                 }
                 const heartDot = document.getElementById('heart-notif-dot');
                 if (heartDot) {
-                    heartDot.style.display = data.friendRequests > 0 ? 'block' : 'none';
+                    heartDot.style.display = data.unreadNotifications > 0 ? 'block' : 'none';
                 }
             }
         })
@@ -101,7 +97,7 @@
         fetch('${pageContext.request.contextPath}/InteractionServlet', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'action=getPendingFriendRequests'
+            body: 'action=getNotifications'
         })
         .then(res => res.json())
         .then(data => {
@@ -109,22 +105,45 @@
                 list.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No new notifications</div>';
             } else {
                 let html = '';
-                data.forEach(function(req) {
+                data.forEach(function(notif) {
                     var ctx = '${pageContext.request.contextPath}';
-                    var photo = req.photo ? req.photo : 'images/default-avatar.png';
+                    var photo = notif.actorPhoto ? notif.actorPhoto : 'images/default-avatar.png';
                     var fullPhoto = (photo.startsWith('http') || photo.startsWith('data:')) ? photo : (ctx + '/' + photo);
-                    html += '<div style="padding:1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem;">' +
+                    
+                    let message = '';
+                    let actionBtn = '';
+                    if (notif.type === 'FRIEND_REQUEST') {
+                        message = 'sent you a friend request.';
+                        actionBtn = '<div style="margin-top:0.5rem; display:flex; gap:0.5rem;">' +
+                                    '<button class="btn btn-primary" style="padding:2px 10px; font-size:0.8rem;" onclick="handleRequest(' + notif.actorId + ', \'accept\', this)">Accept</button>' +
+                                    '<button class="btn btn-outline" style="padding:2px 10px; font-size:0.8rem;" onclick="handleRequest(' + notif.actorId + ', \'reject\', this)">Decline</button>' +
+                                    '</div>';
+                    } else if (notif.type === 'FOLLOW') {
+                        message = 'started following you.';
+                    } else if (notif.type === 'LIKE') {
+                        message = 'liked your post.';
+                    } else if (notif.type === 'COMMENT') {
+                        message = 'commented on your post.';
+                    } else if (notif.type === 'SHARE') {
+                        message = 'shared a post with you.';
+                    }
+
+                    html += '<div style="padding:1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem; background: ' + (notif.isRead ? 'transparent' : 'rgba(255,107,129,0.05)') + ';">' +
                         '<img src="' + fullPhoto + '" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;">' +
                         '<div style="flex:1;">' +
-                            '<div style="font-size:0.9rem;"><strong>' + req.name + '</strong> sent you a follow request.</div>' +
-                            '<div style="margin-top:0.5rem; display:flex; gap:0.5rem;">' +
-                                '<button class="btn btn-primary" style="padding:2px 10px; font-size:0.8rem;" onclick="handleRequest(' + req.senderId + ', \'accept\', this)">Accept</button>' +
-                                '<button class="btn btn-outline" style="padding:2px 10px; font-size:0.8rem;" onclick="handleRequest(' + req.senderId + ', \'reject\', this)">Decline</button>' +
-                            '</div>' +
+                            '<div style="font-size:0.9rem;"><strong>' + notif.actorName + '</strong> ' + message + '</div>' +
+                            actionBtn +
                         '</div>' +
                     '</div>';
                 });
                 list.innerHTML = html;
+                
+                // Mark as read after opening dropdown
+                fetch('${pageContext.request.contextPath}/InteractionServlet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=markNotificationsRead'
+                }).then(() => checkPendingRequests());
             }
         });
     }
@@ -160,3 +179,15 @@
         setInterval(checkPendingRequests, 15000); // Poll every 15 seconds
     });
 </script>
+
+<!-- Share Post Modal (Global) -->
+<div id="sharePostModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:2000;">
+    <div class="modal-content card" style="max-width:400px; width:95%; padding:1.5rem; position:relative;">
+        <span class="close" onclick="closeShareModal()" style="position:absolute; top:15px; right:15px; font-size:1.5rem; cursor:pointer;">&times;</span>
+        <h3 style="margin-top:0; margin-bottom:1.25rem;">Share Post</h3>
+        <div id="share-friends-list" style="max-height: 300px; overflow-y: auto;">
+            <div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>
+        </div>
+        <input type="hidden" id="share-post-id-input" value="">
+    </div>
+</div>
