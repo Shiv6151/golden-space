@@ -39,7 +39,7 @@ public class NotificationDAO {
         String query = "SELECT n.*, u.username as actor_name, u.profile_photo as actor_photo " +
                        "FROM Notifications n " +
                        "JOIN Users u ON n.actor_id = u.user_id " +
-                       "WHERE n.user_id = ? AND n.created_at >= NOW() - INTERVAL 24 HOUR " +
+                       "WHERE n.user_id = ? AND n.created_at >= NOW() - INTERVAL 7 DAY " +
                        "ORDER BY n.created_at DESC";
                        
         try (Connection conn = DBConnection.getConnection();
@@ -74,7 +74,7 @@ public class NotificationDAO {
     }
 
     public int getUnreadCount(int userId) {
-        String query = "SELECT count(*) FROM Notifications WHERE user_id = ? AND is_read = FALSE AND created_at >= NOW() - INTERVAL 24 HOUR";
+        String query = "SELECT count(*) FROM Notifications WHERE user_id = ? AND is_read = FALSE AND created_at >= NOW() - INTERVAL 7 DAY";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, userId);

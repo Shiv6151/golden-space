@@ -15,10 +15,12 @@ import java.io.IOException;
 public class FriendServlet extends HttpServlet {
 
     private FriendDAO friendDAO;
+    private com.socialmedia.dao.NotificationDAO notificationDAO;
 
     @Override
     public void init() {
         friendDAO = new FriendDAO();
+        notificationDAO = new com.socialmedia.dao.NotificationDAO();
     }
 
     @Override
@@ -56,7 +58,10 @@ public class FriendServlet extends HttpServlet {
             friendDAO.sendFriendRequest(currentUser.getUserId(), friendId);
         } else if ("accept".equals(action)) {
             // Note: The original sender is friendId, and the current user is the receiver
-            friendDAO.updateFriendRequestStatus(friendId, currentUser.getUserId(), "ACCEPTED");
+            boolean success = friendDAO.updateFriendRequestStatus(friendId, currentUser.getUserId(), "ACCEPTED");
+            if (success) {
+                notificationDAO.addNotification(friendId, currentUser.getUserId(), "REQUEST_ACCEPTED", null);
+            }
         } else if ("reject".equals(action)) {
             friendDAO.updateFriendRequestStatus(friendId, currentUser.getUserId(), "REJECTED");
         } else if ("remove".equals(action)) {

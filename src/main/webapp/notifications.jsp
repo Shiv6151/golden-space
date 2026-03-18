@@ -86,6 +86,11 @@
                     <c:set var="iconClass" value="far fa-paper-plane" />
                     <c:set var="message" value="shared a post with you." />
                 </c:when>
+                <c:when test="${notif.type == 'REQUEST_ACCEPTED'}">
+                    <c:set var="iconColor" value="#55efc4" />
+                    <c:set var="iconClass" value="fas fa-user-check" />
+                    <c:set var="message" value="accepted your follow request." />
+                </c:when>
             </c:choose>
 
             <div class="notif-item ${notif.read ? '' : 'unread'}">

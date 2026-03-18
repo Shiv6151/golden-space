@@ -125,12 +125,19 @@
                         message = 'commented on your post.';
                     } else if (notif.type === 'SHARE') {
                         message = 'shared a post with you.';
+                    } else if (notif.type === 'REQUEST_ACCEPTED') {
+                         message = 'accepted your follow request.';
                     }
 
+                    let cleanName = notif.actorName;
+                    if (cleanName && cleanName.indexOf('|') !== -1) cleanName = cleanName.split('|')[0];
+                    
+                    let actorUrl = ctx + '/ProfileServlet?id=' + notif.actorId;
+
                     html += '<div style="padding:1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem; background: ' + (notif.isRead ? 'transparent' : 'rgba(255,107,129,0.05)') + ';">' +
-                        '<img src="' + fullPhoto + '" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;">' +
+                        '<a href="' + actorUrl + '"><img src="' + fullPhoto + '" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;"></a>' +
                         '<div style="flex:1;">' +
-                            '<div style="font-size:0.9rem;"><strong>' + notif.actorName + '</strong> ' + message + '</div>' +
+                            '<div style="font-size:0.9rem;"><strong><a href="' + actorUrl + '" style="color:inherit; text-decoration:none;">@' + cleanName + '</a></strong> ' + message + '</div>' +
                             actionBtn +
                         '</div>' +
                     '</div>';
