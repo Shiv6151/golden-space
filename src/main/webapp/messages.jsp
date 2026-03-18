@@ -524,9 +524,14 @@
                                                 <div style="margin-bottom: 8px;">
                                                     <c:choose>
                                                         <c:when test="${msg.attachmentType == 'image'}">
-                                                            <a href="${msg.attachmentUrl}" target="_blank">
-                                                                <img src="${msg.attachmentUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
-                                                            </a>
+                                                            <div style="position: relative; display: inline-block;">
+                                                                <a href="${msg.attachmentUrl}" target="_blank">
+                                                                    <img src="${msg.attachmentUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                                </a>
+                                                                <a href="${msg.attachmentUrl}" download="chat_image" target="_blank" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; padding: 6px 10px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; transition: background 0.2s;" title="Download Image" onmouseover="this.style.background='rgba(0,0,0,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'">
+                                                                    <i class="fas fa-download"></i>
+                                                                </a>
+                                                            </div>
                                                         </c:when>
                                                         <c:when test="${msg.attachmentType == 'video'}">
                                                             <video controls style="max-width: 100%; max-height: 250px; border-radius: 8px;">
@@ -682,6 +687,65 @@
             </c:choose>
         </div>
     </div>
+    
+    <!-- Message Reaction Logic -->
+    <script>
+        function toggleEmojiPicker(messageId, e) {
+            e.stopPropagation();
+            const picker = document.getElementById('emoji-picker-' + messageId);
+            if (picker.style.display === 'flex') {
+                picker.style.display = 'none';
+            } else {
+                document.querySelectorAll('.emoji-picker-popup').forEach(p => p.style.display = 'none');
+                picker.style.display = 'flex';
+            }
+        }
+        
+        document.addEventListener('click', documentClickListener);
+        function documentClickListener(e) {
+            document.querySelectorAll('.emoji-picker-popup').forEach(p => p.style.display = 'none');
+        }
+
+        function toggleMessageReaction(messageId, emoji, e) {
+            e.stopPropagation();
+            document.getElementById('emoji-picker-' + messageId).style.display = 'none';
+            fetch((window.contextPath || '') + '/InteractionServlet', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'action=reactMessage&messageId=' + messageId + '&emoji=' + encodeURIComponent(emoji)
+            })
+            .then(res => res.json())
+            .then(data => {
+                loadMessageReactions(messageId);
+            })
+            .catch(err => console.error('Error toggling reaction:', err));
+        }
+
+        function loadMessageReactions(messageId) {
+            fetch((window.contextPath || '') + '/InteractionServlet', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'action=getMessageReactions&messageId=' + messageId
+            })
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('msg-reactions-' + messageId);
+                if (!container) return;
+                
+                if (data.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(r => {
+                    html += '<span class="reaction-badge" title="React with '+r.emoji+'" style="background:var(--bg-light); border:1px solid var(--border-color); border-radius:12px; padding:2px 6px; font-size:0.8rem; margin-right:4px; cursor:pointer;" onclick="toggleMessageReaction(\''+messageId+'\', \''+r.emoji+'\', event)">' + r.emoji + ' ' + r.count + '</span>';
+                });
+                container.innerHTML = html;
+            })
+            .catch(err => console.error('Error loading reactions:', err));
+        }
+    </script>
 </body>
 <script>
 function goBackToSidebar() {
