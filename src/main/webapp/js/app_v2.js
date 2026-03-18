@@ -155,34 +155,74 @@ function sendPostShareToSelected(btn) {
                 minutes = minutes < 10 ? '0' + minutes : minutes;
                 const timeString = hours + ':' + minutes + ' ' + ampm;
                 
-                // Construct the shared post card HTML directly
-                const cardHtml = `<div class="shared-post-card" onclick="openPostModal(${postId})" style="cursor:pointer; background:var(--bg-light); border:1px solid var(--border-color); padding:0.75rem 1rem; border-radius:8px; display:inline-flex; align-items:center; gap:0.75rem; color:var(--text-color); margin: 0.25rem 0;">
-                                    <div style="background:rgba(255, 71, 87, 0.1); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--primary-color);">
-                                        <i class="fas fa-camera-retro fa-lg"></i>
-                                    </div>
-                                    <div style="text-align:left;">
-                                        <strong style="display:block; font-size: 0.95rem;">Shared Post</strong>
-                                        <span style="font-size:0.8rem; color:var(--text-muted); text-decoration:underline;">Click to view</span>
-                                    </div>
-                                </div>`;
-                
+                // Construct the rich shared post card placeholder
                 const wrapper = document.createElement('div');
                 wrapper.className = 'message-wrapper';
                 wrapper.style.justifyContent = 'flex-end';
+                const bubbleId = 'optimistic-' + Date.now();
                 wrapper.innerHTML = `
-                    <div class="message-bubble message-sent" style="margin-bottom: 0px; max-width: 80%; width: fit-content;">
-                        \${cardHtml}
-                        <div class="msg-time">\${timeString}</div>
+                    <div class="message-bubble message-sent" style="margin-bottom: 0px; max-width: 80%; width: 280px; padding: 0; overflow: hidden; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <div id="${bubbleId}" style="min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--bg-light);">
+                             <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="msg-time" style="padding: 0.2rem 0.75rem; font-size: 0.7rem; text-align: right; background: var(--bg-white); border-top: 1px solid var(--border-color);">${timeString}</div>
                     </div>
                 `;
                 chatWindow.appendChild(wrapper);
                 chatWindow.scrollTop = chatWindow.scrollHeight;
+                
+                // Now render the rich content
+                renderRichPostPreview(document.getElementById(bubbleId), postId);
             }
         }
     }).catch(err => {
         btn.disabled = false;
         btn.innerHTML = originalText;
         alert('Failed to share post with some followers.');
+    });
+}
+
+function renderRichPostPreview(container, postId) {
+    if (!container || !postId) return;
+    
+    fetch((window.contextPath || '') + '/InteractionServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=getPostDetail&postId=' + postId
+    })
+    .then(res => res.json())
+    .then(post => {
+        const authorPhoto = getImageUrl(post.userPhoto || 'images/default-avatar.png');
+        const postImg = (post.images && post.images.length > 0) ? getImageUrl(post.images[0]) : getImageUrl('images/placeholder.png');
+        const contentSnippet = post.postContent ? (post.postContent.length > 60 ? post.postContent.substring(0, 57) + '...' : post.postContent) : '';
+        
+        container.innerHTML = `
+            <div class="rich-post-share" onclick="openPostModal ? openPostModal(${postId}) : (window.location.href='FeedServlet?postId=${postId}')" style="cursor:pointer; background:var(--bg-white); width:100%;">
+                <div style="padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color);">
+                    <img src="${authorPhoto}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+                    <span style="font-weight:700; font-size:0.85rem; color:var(--text-main);">@${post.userHandle}</span>
+                </div>
+                <div style="width:100%; aspect-ratio: 1/1; background:#000; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                    <img src="${postImg}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+                <div style="padding: 8px 12px; font-size: 0.85rem; color: var(--text-main); border-top: 1px solid var(--border-color);">
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <span style="font-weight:700; margin-right:4px;">@${post.userHandle}</span>
+                        <span>${contentSnippet}</span>
+                    </div>
+                    <div style="margin-top: 4px; color: var(--primary-color); font-weight: 600; font-size: 0.75rem;">View Post</div>
+                </div>
+            </div>
+        `;
+        // Scroll adjustment if we are at bottom
+        const cw = document.getElementById('chatWindow');
+        if (cw && Math.abs(cw.scrollTop + cw.clientHeight - cw.scrollHeight) < 200) {
+            cw.scrollTop = cw.scrollHeight;
+        }
+    })
+    .catch(err => {
+        console.error('Error loading rich post preview:', err);
+        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Post not available</div>';
     });
 }
 

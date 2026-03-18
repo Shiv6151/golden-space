@@ -610,12 +610,97 @@ function toggleEditModal() {
                     <i class="fas fa-search-plus text-muted"></i>
                 </div>
                 <small class="text-muted d-block mb-3">Drag the image to position it</small>
+function toggleEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function updatePrivacy(isPrivate) {
+            const statusText = document.getElementById('privacyStatus');
+            fetch(contextPath + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=privacy&isPrivate=' + isPrivate
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') {
+                    statusText.innerText = isPrivate ? "Private Account" : "Public Account";
+                } else {
+                    alert("Failed to update privacy.");
+                    document.getElementById('privacyToggle').checked = !isPrivate;
+                }
+            });
+        }
+
+        function updatePassword(e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const msgDiv = document.getElementById('passwordMessage');
+            
+            msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            msgDiv.className = 'text-muted';
+
+            fetch(contextPath + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=password&currentPassword=' + encodeURIComponent(currentPassword) + '&newPassword=' + encodeURIComponent(newPassword)
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') {
+                    msgDiv.innerText = 'Password updated successfully!';
+                    msgDiv.className = 'text-success';
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    msgDiv.innerText = data;
+                    msgDiv.className = 'text-danger';
+                }
+            });
+        }
+    </script>
+
+    <!-- Profile Photo View Modal -->
+    <div id="profilePhotoModal" class="modal" onclick="closeProfilePhoto()" style="display: none; background: rgba(0,0,0,0.9); z-index: 2000;">
+        <span class="close" onclick="closeProfilePhoto()" style="color: white; top: 20px; right: 30px; font-size: 40px;">&times;</span>
+        <div class="modal-content" style="background: none; border: none; box-shadow: none; display: flex; justify-content: center; align-items: center; max-width: 90vw; max-height: 90vh;">
+            <img id="fullProfilePhoto" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- Cropping Modal (Shared) -->
+    <div id="cropModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:5000;">
+        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Adjust Image</h3>
+                <span class="close" onclick="closeCropModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            
+            <div id="cropContainer" style="width:100%; background:#000; overflow:hidden; border-radius:8px; position:relative; cursor:move; user-select:none;">
+                <img id="cropImg" src="" style="position:absolute; top:0; left:0; pointer-events:none;">
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events:none; border: 2px solid var(--primary-color);"></div>
+            </div>
+
+            <div style="margin-top:1.5rem; text-align:center;">
+                <div style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem;">
+                    <i class="fas fa-search-minus text-muted"></i>
+                    <input type="range" id="zoomSlider" min="1" max="3" step="0.01" value="1" style="flex:1;">
+                    <i class="fas fa-search-plus text-muted"></i>
+                </div>
+                <small class="text-muted d-block mb-3">Drag the image to position it</small>
                 <button type="button" class="btn btn-primary w-100" onclick="saveEditCrop()">Apply Adjustment</button>
             </div>
         </div>
     </div>
 
     <!-- Core App JS -->
+    <script>
+        window.contextPath = '${pageContext.request.contextPath}';
+        window.loggedInUserId = '${sessionScope.user.userId}';
+        window.currentProfileUserId = '${profileUser.userId}';
+    </script>
     <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>
 
 </body>

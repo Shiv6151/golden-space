@@ -600,18 +600,21 @@
                                 const id = bubble.getAttribute('data-id');
                                 if (id) loadMessageReactions(id);
                                 
-                                // Intercept [POST_SHARE:X] tags and render as interactive cards
+                                // Intercept [POST_SHARE:X] tags and render as rich interactive cards
                                 let html = bubble.innerHTML;
                                 if (html.includes('[POST_SHARE:')) {
                                     bubble.innerHTML = html.replace(/\[POST_SHARE:(\d+)\]/g, (match, p1) => {
-                                        return `<div class="shared-post-card" onclick="openPostModal(${p1})" style="cursor:pointer; background:var(--bg-light); border:1px solid var(--border-color); padding:0.75rem 1rem; border-radius:8px; display:inline-flex; align-items:center; gap:0.75rem; color:var(--text-color); margin: 0.25rem 0;">
-                                            <div style="background:rgba(255, 71, 87, 0.1); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--primary-color);">
-                                                <i class="fas fa-camera-retro fa-lg"></i>
-                                            </div>
-                                            <div style="text-align:left;">
-                                                <strong style="display:block; font-size: 0.95rem;">Shared Post</strong>
-                                                <span style="font-size:0.8rem; color:var(--text-muted); text-decoration:underline;">Click to view in feed</span>
-                                            </div>
+                                        const uniqueId = 'share-' + p1 + '-' + Math.floor(Math.random() * 1000000);
+                                        // Use setTimeout to ensure the DOM is ready before calling render
+                                        setTimeout(() => {
+                                            const container = document.getElementById(uniqueId);
+                                            if (container && typeof renderRichPostPreview === 'function') {
+                                                renderRichPostPreview(container, p1);
+                                            }
+                                        }, 50);
+                                        
+                                        return `<div id="${uniqueId}" style="margin: 0.5rem 0; width: 280px; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
+                                            <i class="fas fa-spinner fa-spin"></i>
                                         </div>`;
                                     });
                                 }
@@ -777,6 +780,7 @@
             .catch(err => console.error('Error loading reactions:', err));
         }
     </script>
+    <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>
 </body>
 <script>
 function goBackToSidebar() {
