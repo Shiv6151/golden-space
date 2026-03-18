@@ -54,22 +54,29 @@ public class RegisterServlet extends HttpServlet {
 
         // Save OTP request
         System.out.println("DEBUG: Saving OTP request to DB...");
-        boolean saved = userDAO.saveOtpRequest(name, username, email, password, otp);
-        if (saved) {
-            System.out.println("DEBUG: OTP request saved. Sending email...");
-            boolean emailSent = EmailSender.sendOtpEmail(email, otp, getServletContext());
-            if (emailSent) {
-                System.out.println("DEBUG: Email sent! Redirecting to OTP verify...");
-                request.getSession().setAttribute("verifyEmail", email);
-                response.sendRedirect("otp_verify.jsp");
-                return;
+        getServletContext().log("DEBUG: Saving OTP request to DB...");
+        
+        try {
+            boolean saved = userDAO.saveOtpRequest(name, username, email, password, otp);
+            if (saved) {
+                System.out.println("DEBUG: OTP request saved. Sending email...");
+                getServletContext().log("DEBUG: OTP request saved. Sending email...");
+                
+                boolean emailSent = EmailSender.sendOtpEmail(email, otp, getServletContext());
+                if (emailSent) {
+                    System.out.println("DEBUG: Email sent! Redirecting...");
+                    request.getSession().setAttribute("verifyEmail", email);
+                    response.sendRedirect("otp_verify.jsp");
+                    return;
+                } else {
+                    request.setAttribute("error", "Email timeout (10s) or Port 465 block. Check Render Logs.");
+                }
             } else {
-                System.out.println("DEBUG: Email sending failed.");
-                request.setAttribute("error", "Failed to send OTP email. Try again later.");
+                request.setAttribute("error", "Database timeout (10s) or TiDB Connection error.");
             }
-        } else {
-            System.out.println("DEBUG: Saving OTP request failed.");
-            request.setAttribute("error", "Registration failed. Please try again.");
+        } catch (Exception e) {
+            getServletContext().log("CRITICAL ERROR in RegisterServlet", e);
+            request.setAttribute("error", "System Error: " + e.getMessage());
         }
         
         request.getRequestDispatcher("register.jsp").forward(request, response);
