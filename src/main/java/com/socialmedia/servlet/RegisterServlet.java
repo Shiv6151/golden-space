@@ -69,9 +69,11 @@ public class RegisterServlet extends HttpServlet {
                     response.sendRedirect("otp_verify.jsp");
                     return;
                 } else {
-                    // CLOUD BYPASS: If email is blocked, show the OTP directly for testing
-                    request.setAttribute("errorMsg", "Email Blocked by Render Free Tier. YOUR TEST OTP IS: " + otp + " (Please use this code to verify)");
+                    // CLOUD BYPASS: If email is blocked, still redirect to OTP page but with a warning
                     request.getSession().setAttribute("verifyEmail", email);
+                    request.getSession().setAttribute("otpMessage", "Email Blocked by Render. USE THIS OTP: " + otp);
+                    response.sendRedirect("otp_verify.jsp");
+                    return;
                 }
             } else {
                 request.setAttribute("errorMsg", "Database timeout (10s) or TiDB Connection error.");

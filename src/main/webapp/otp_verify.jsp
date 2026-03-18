@@ -34,6 +34,13 @@
                     <i class="fas fa-exclamation-circle"></i> ${error}
                 </div>
             </c:if>
+
+            <c:if test="${not empty sessionScope.otpMessage}">
+                <div style="background-color: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.95rem; text-align: center; border: 1px solid #bbf7d0;">
+                    <i class="fas fa-info-circle"></i> ${sessionScope.otpMessage}
+                    <% session.removeAttribute("otpMessage"); %>
+                </div>
+            </c:if>
             
             <form action="OtpVerificationServlet" method="POST">
                 <div class="form-group mb-4">
