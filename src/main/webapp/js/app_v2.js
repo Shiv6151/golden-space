@@ -88,7 +88,54 @@ function sendPostShareToSelected(btn) {
     
     Promise.all(promises).then(results => {
         closeShareModal();
-        alert('Post shared successfully to ' + checkboxes.length + ' followers!');
+        alert('Message Sent Successfully');
+        
+        // If the user currently has the chat window open and shared it with the active chat user
+        const chatWindow = document.getElementById('chatWindow');
+        const currentChatUserIdInput = document.getElementById('currentChatUserId');
+        
+        if (chatWindow && currentChatUserIdInput) {
+            const currentChatUser = currentChatUserIdInput.value;
+            let sentToCurrent = false;
+            checkboxes.forEach(cb => {
+                if (cb.value === currentChatUser) sentToCurrent = true;
+            });
+            
+            if (sentToCurrent) {
+                // Get local time formatted like 'hh:mm a'
+                const now = new Date();
+                let hours = now.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; 
+                let minutes = now.getMinutes();
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                const timeString = hours + ':' + minutes + ' ' + ampm;
+                
+                // Construct the shared post card HTML directly
+                const cardHtml = `<div class="shared-post-card" onclick="openPostModal(${postId})" style="cursor:pointer; background:var(--bg-light); border:1px solid var(--border-color); padding:0.75rem 1rem; border-radius:8px; display:inline-flex; align-items:center; gap:0.75rem; color:var(--text-color); margin: 0.25rem 0;">
+                                    <div style="background:rgba(255, 71, 87, 0.1); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--primary-color);">
+                                        <i class="fas fa-camera-retro fa-lg"></i>
+                                    </div>
+                                    <div style="text-align:left;">
+                                        <strong style="display:block; font-size: 0.95rem;">Shared Post</strong>
+                                        <span style="font-size:0.8rem; color:var(--text-muted); text-decoration:underline;">Click to view</span>
+                                    </div>
+                                </div>`;
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'message-wrapper';
+                wrapper.style.justifyContent = 'flex-end';
+                wrapper.innerHTML = `
+                    <div class="message-bubble message-sent" style="margin-bottom: 0px; max-width: 80%; width: fit-content;">
+                        \${cardHtml}
+                        <div class="msg-time">\${timeString}</div>
+                    </div>
+                `;
+                chatWindow.appendChild(wrapper);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }
     }).catch(err => {
         btn.disabled = false;
         btn.innerHTML = originalText;
