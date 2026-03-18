@@ -67,14 +67,16 @@
                                 </div>
                             </div>
                             <div>
-                                <c:choose>
-                                    <c:when test="${user.followedByMe}">
-                                        <button class="btn btn-outline btn-sm" onclick="toggleFollow(${user.userId}, this)" title="Unfollow">Unfollow</button>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <button class="btn btn-primary btn-sm" onclick="toggleFollow(${user.userId}, this)" title="Follow">Follow</button>
-                                    </c:otherwise>
-                                </c:choose>
+                                <c:if test="${user.userId != sessionScope.user.userId}">
+                                    <c:choose>
+                                        <c:when test="${user.followedByMe}">
+                                            <button class="btn btn-outline btn-sm" onclick="toggleFollow(${user.userId}, this)" title="Unfollow">Unfollow</button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <button class="btn btn-primary btn-sm" onclick="toggleFollow(${user.userId}, this)" title="Follow">Follow</button>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </div>
                         </div>
                     </c:forEach>
