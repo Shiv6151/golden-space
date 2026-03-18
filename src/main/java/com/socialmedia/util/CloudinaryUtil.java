@@ -12,20 +12,20 @@ public class CloudinaryUtil {
     private static Cloudinary cloudinary;
 
     static {
-        // We'll use environment variables for security on Render
-        // For local development, these will be null unless set in the env
-        String cloudName = System.getenv("CLOUDINARY_CLOUD_NAME");
-        String apiKey = System.getenv("CLOUDINARY_API_KEY");
-        String apiSecret = System.getenv("CLOUDINARY_API_SECRET");
+        // Use environment variables on Render, fallback to defaults for portability
+        String cloudName = System.getenv("CLOUDINARY_CLOUD_NAME") != null ? 
+                System.getenv("CLOUDINARY_CLOUD_NAME") : "dmcltqixh";
+        String apiKey = System.getenv("CLOUDINARY_API_KEY") != null ? 
+                System.getenv("CLOUDINARY_API_KEY") : "296687126415345";
+        String apiSecret = System.getenv("CLOUDINARY_API_SECRET") != null ? 
+                System.getenv("CLOUDINARY_API_SECRET") : "W-f7j9ukSNDcRxWdGW6QX0_ELhE";
 
-        if (cloudName != null && apiKey != null && apiSecret != null) {
-            cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName,
-                "api_key", apiKey,
-                "api_secret", apiSecret,
-                "secure", true
-            ));
-        }
+        cloudinary = new Cloudinary(ObjectUtils.asMap(
+            "cloud_name", cloudName,
+            "api_key", apiKey,
+            "api_secret", apiSecret,
+            "secure", true
+        ));
     }
 
     public static String upload(Part part) {
