@@ -1,7 +1,6 @@
 package com.socialmedia.util;
 
 import java.util.Properties;
-
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -10,6 +9,7 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.ServletContext;
 
 public class EmailSender {
 
@@ -22,14 +22,17 @@ public class EmailSender {
     private static final String SMTP_PASSWORD = System.getenv("SMTP_PASSWORD") != null ? 
             System.getenv("SMTP_PASSWORD") : DEFAULT_PASSWORD;
 
-    public static boolean sendOtpEmail(String recipientEmail, String otp) {
-        System.out.println("Trying to send real OTP email to: " + recipientEmail);
+    public static boolean sendOtpEmail(String recipientEmail, String otp, ServletContext context) {
+        if (context != null) context.log("Trying to send real OTP email (SSL 465) to: " + recipientEmail);
+        System.out.println("Trying to send real OTP email (SSL 465) to: " + recipientEmail);
 
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
         properties.put("mail.smtp.host", "smtp.gmail.com");
-        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.socketFactory.port", "465");
+        properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        properties.put("mail.smtp.ssl.enable", "true");
         
         // Add timeouts to prevent hanging (10 seconds)
         properties.put("mail.smtp.connectiontimeout", "10000");
@@ -43,7 +46,7 @@ public class EmailSender {
             }
         });
         
-        // Enable debug logging to see SMTP handshake in Render logs
+        // Enable debug logging
         session.setDebug(true);
 
         try {
@@ -54,9 +57,12 @@ public class EmailSender {
             message.setText("Welcome to SocialConnect!\n\nYour registration OTP is: " + otp + "\n\nThis OTP will expire in 5 minutes.");
 
             Transport.send(message);
+            if (context != null) context.log("Email sent successfully!");
             System.out.println("Email sent successfully!");
             return true;
         } catch (MessagingException e) {
+            String errorMsg = "Email sending failed: " + e.getMessage();
+            if (context != null) context.log(errorMsg, e);
             e.printStackTrace();
             return false;
         }

@@ -57,7 +57,7 @@ public class RegisterServlet extends HttpServlet {
         boolean saved = userDAO.saveOtpRequest(name, username, email, password, otp);
         if (saved) {
             System.out.println("DEBUG: OTP request saved. Sending email...");
-            boolean emailSent = EmailSender.sendOtpEmail(email, otp);
+            boolean emailSent = EmailSender.sendOtpEmail(email, otp, getServletContext());
             if (emailSent) {
                 System.out.println("DEBUG: Email sent! Redirecting to OTP verify...");
                 request.getSession().setAttribute("verifyEmail", email);
