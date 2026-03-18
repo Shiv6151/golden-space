@@ -53,17 +53,22 @@ public class RegisterServlet extends HttpServlet {
         String otp = String.format("%06d", new Random().nextInt(999999));
 
         // Save OTP request
+        System.out.println("DEBUG: Saving OTP request to DB...");
         boolean saved = userDAO.saveOtpRequest(name, username, email, password, otp);
         if (saved) {
+            System.out.println("DEBUG: OTP request saved. Sending email...");
             boolean emailSent = EmailSender.sendOtpEmail(email, otp);
             if (emailSent) {
+                System.out.println("DEBUG: Email sent! Redirecting to OTP verify...");
                 request.getSession().setAttribute("verifyEmail", email);
                 response.sendRedirect("otp_verify.jsp");
                 return;
             } else {
+                System.out.println("DEBUG: Email sending failed.");
                 request.setAttribute("error", "Failed to send OTP email. Try again later.");
             }
         } else {
+            System.out.println("DEBUG: Saving OTP request failed.");
             request.setAttribute("error", "Registration failed. Please try again.");
         }
         
