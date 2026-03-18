@@ -30,14 +30,16 @@ function openShareModal(postId) {
             html += '<div style="max-height: 280px; overflow-y: auto; display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; padding: 1rem;">';
             followers.forEach(f => {
                 const photo = getImageUrl(f.photo);
+                const safeName = (f.name && f.name !== 'null') ? f.name : (f.username && f.username !== 'null' ? f.username : 'User');
+                const safeUsername = (f.username && f.username !== 'null') ? f.username : 'user';
                 html += `
                     <label style="display:flex; flex-direction:column; align-items:center; cursor:pointer; text-align:center; padding: 0.5rem; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;" onchange="this.style.borderColor = this.querySelector('input').checked ? 'var(--primary-color)' : 'transparent'; this.style.background = this.querySelector('input').checked ? 'rgba(255,71,87,0.05)' : 'transparent';">
                         <div style="position:relative; margin-bottom: 0.5rem;">
-                            <img src="\${photo}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
-                            <input type="checkbox" class="share-follower-checkbox" value="\${f.id}" style="position:absolute; bottom:0; right:0; width: 18px; height: 18px; cursor:pointer; accent-color: var(--primary-color);">
+                            <img src="\${photo}" alt="\${safeName}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);" onerror="this.src='\${getImageUrl('images/default-avatar.png')}'">
+                            <input type="checkbox" class="share-follower-checkbox" value="\${f.userId}" style="position:absolute; bottom:0; right:0; width: 18px; height: 18px; cursor:pointer; accent-color: var(--primary-color);">
                         </div>
-                        <span style="font-weight:600; font-size: 0.85rem; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">\${f.name || f.username}</span>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@\${f.username}</span>
+                        <span style="font-weight:600; font-size: 0.85rem; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">\${safeName}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@\${safeUsername}</span>
                     </label>
                 `;
             });
