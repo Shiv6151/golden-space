@@ -32,19 +32,19 @@ public class RegisterServlet extends HttpServlet {
 
         // Validate Gmail
         if (email == null || !email.toLowerCase().endsWith("@gmail.com")) {
-            request.setAttribute("error", "Only @gmail.com addresses are allowed.");
+            request.setAttribute("errorMsg", "Only @gmail.com addresses are allowed.");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
 
         // Validate Unique Username and Email
         if (userDAO.isUsernameTaken(username)) {
-            request.setAttribute("error", "Username is already taken.");
+            request.setAttribute("errorMsg", "Username is already taken.");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
         if (userDAO.isEmailTaken(email)) {
-            request.setAttribute("error", "Email is already registered.");
+            request.setAttribute("errorMsg", "Email is already registered.");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
@@ -69,14 +69,14 @@ public class RegisterServlet extends HttpServlet {
                     response.sendRedirect("otp_verify.jsp");
                     return;
                 } else {
-                    request.setAttribute("error", "Email timeout (10s) or Port 465 block. Check Render Logs.");
+                    request.setAttribute("errorMsg", "Email timeout (10s) or Port 465 block. Check Render Logs.");
                 }
             } else {
-                request.setAttribute("error", "Database timeout (10s) or TiDB Connection error.");
+                request.setAttribute("errorMsg", "Database timeout (10s) or TiDB Connection error.");
             }
         } catch (Exception e) {
             getServletContext().log("CRITICAL ERROR in RegisterServlet", e);
-            request.setAttribute("error", "System Error: " + e.getMessage());
+            request.setAttribute("errorMsg", "System Error: " + e.getMessage());
         }
         
         request.getRequestDispatcher("register.jsp").forward(request, response);
