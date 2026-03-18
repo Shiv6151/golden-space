@@ -1,0 +1,13 @@
+target/
+*.class
+*.iml
+.idea/
+*.py
+tidb_schema.sql
+test_imap.py
+search_emails.py
+extract_links.py
+verify_and_search.py
+verify_and_search_v2.py
+deep_search.py
+search_tidb.py
