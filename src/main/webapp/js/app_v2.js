@@ -11,47 +11,90 @@ function getImageUrl(path) {
 // ----------------------------------------------------
 // Share Post Functionality
 // ----------------------------------------------------
+window.allShareContacts = [];
+
 function openShareModal(postId) {
     document.getElementById('share-post-id-input').value = postId;
-    document.getElementById('sharePostModal').style.display = 'flex';
-    document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading followers...</div>';
+    const searchInput = document.getElementById('share-search-input');
+    if (searchInput) searchInput.value = '';
     
-    fetch((window.contextPath || '') + '/InteractionServlet', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=getFollowers&targetId=' + window.currentUserId
-    })
-    .then(res => res.json())
-    .then(followers => {
-        let html = '';
-        if (followers.length === 0) {
-            html = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No followers available to share with.</div>';
-        } else {
-            html += '<div style="max-height: 280px; overflow-y: auto; display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; padding: 1rem;">';
-            followers.forEach(f => {
-                const photo = getImageUrl(f.photo);
-                const safeUsername = (f.username && f.username !== 'null') ? f.username : 'user';
-                html += `
-                    <label style="display:flex; flex-direction:column; align-items:center; cursor:pointer; text-align:center; padding: 0.5rem; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;" onchange="this.style.borderColor = this.querySelector('input').checked ? 'var(--primary-color)' : 'transparent'; this.style.background = this.querySelector('input').checked ? 'rgba(255,71,87,0.05)' : 'transparent';">
-                        <div style="position:relative; margin-bottom: 0.5rem;">
-                            <img src="\${photo}" alt="\${safeUsername}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);" onerror="this.src='\${getImageUrl('images/default-avatar.png')}'">
-                            <input type="checkbox" class="share-follower-checkbox" value="\${f.userId}" style="position:absolute; bottom:0; right:0; width: 18px; height: 18px; cursor:pointer; accent-color: var(--primary-color);">
-                        </div>
-                        <span style="font-weight:600; font-size: 0.85rem; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">@\${safeUsername}</span>
-                    </label>
-                `;
-            });
-            html += '</div>';
-            html += `
-                <div style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-                    <button class="btn btn-primary" onclick="sendPostShareToSelected(this)" style="width: 100%; font-weight: 600; padding: 0.75rem; border-radius: 30px;"><i class="far fa-paper-plane" style="margin-right:0.5rem;"></i> Send to Selected</button>
-                </div>
-            `;
-        }
-        document.getElementById('share-friends-list').innerHTML = html;
+    document.getElementById('sharePostModal').style.display = 'flex';
+    document.getElementById('share-friends-list').innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Finding everyone...</div>';
+    
+    const ctx = (window.contextPath || '');
+    const uid = window.currentUserId;
+    
+    // Fetch both followers and following to ensure "all followers" are shown
+    Promise.all([
+        fetch(ctx + '/InteractionServlet?action=getFollowers&targetId=' + uid, { method: 'POST' }).then(res => res.json()),
+        fetch(ctx + '/InteractionServlet?action=getFollowing&targetId=' + uid, { method: 'POST' }).then(res => res.json())
+    ])
+    .then(([followers, following]) => {
+        // De-duplicate by userId
+        const map = new Map();
+        followers.forEach(u => map.set(u.userId, u));
+        following.forEach(u => map.set(u.userId, u));
+        
+        window.allShareContacts = Array.from(map.values());
+        renderShareList(window.allShareContacts);
     }).catch(err => {
-        document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--danger-color);">Error loading followers</div>';
+        console.error(err);
+        document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--danger-color);">Error loading contacts</div>';
     });
+}
+
+function filterShareList() {
+    const query = document.getElementById('share-search-input').value.toLowerCase();
+    const filtered = window.allShareContacts.filter(u => 
+        (u.username && u.username.toLowerCase().includes(query)) || 
+        (u.name && u.name.toLowerCase().includes(query))
+    );
+    renderShareList(filtered);
+}
+
+function renderShareList(contacts) {
+    const container = document.getElementById('share-friends-list');
+    const postId = document.getElementById('share-post-id-input').value;
+    
+    if (contacts.length === 0) {
+        container.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No contacts found matching your search.</div>';
+        return;
+    }
+
+    let html = '<div style="max-height:300px; display:grid; grid-template-columns: repeat(3, 1fr); gap:0.75rem; padding: 1.25rem;">';
+    contacts.forEach(f => {
+        const photo = getImageUrl(f.photo);
+        const safeUsername = (f.username && f.username !== 'null') ? f.username : (f.name || 'user');
+        html += `
+            <label class="share-contact-item" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; text-align:center; padding: 0.6rem; border-radius:12px; border:1px solid transparent; transition:all 0.2s;" onchange="updateContactSelection(this)">
+                <div style="position:relative; margin-bottom: 0.5rem; width:55px; height:55px;">
+                    <img src="\${photo}" alt="\${safeUsername}" style="width:100%; height:100%; border-radius:50%; object-fit:cover; border:2px solid var(--border-color);" onerror="this.src='\${getImageUrl('images/default-avatar.png')}'">
+                    <input type="checkbox" class="share-follower-checkbox" value="\${f.userId}" style="position:absolute; bottom:-2px; right:-2px; width: 18px; height: 18px; cursor:pointer; accent-color: var(--primary-color);">
+                </div>
+                <span style="font-weight:600; font-size: 0.8rem; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">@\${safeUsername}</span>
+            </label>
+        `;
+    });
+    html += '</div>';
+    html += `
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-white);">
+            <button class="btn btn-primary" onclick="sendPostShareToSelected(this)" style="width: 100%; font-weight: 700; padding: 0.85rem; border-radius: 30px; box-shadow: 0 4px 12px rgba(255, 71, 87, 0.25);"><i class="far fa-paper-plane" style="margin-right:0.6rem;"></i> Send to Selected</button>
+        </div>
+    `;
+    container.innerHTML = html;
+}
+
+function updateContactSelection(label) {
+    const cb = label.querySelector('input');
+    if (cb.checked) {
+        label.style.borderColor = 'var(--primary-color)';
+        label.style.background = 'rgba(255,71,87,0.05)';
+        label.style.transform = 'scale(1.02)';
+    } else {
+        label.style.borderColor = 'transparent';
+        label.style.background = 'transparent';
+        label.style.transform = 'scale(1)';
+    }
 }
 
 function closeShareModal() {

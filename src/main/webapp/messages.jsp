@@ -306,7 +306,13 @@
             padding: 0;
             margin-right: 8px;
         }
+        .mobile-only {
+            display: none;
+        }
         @media (max-width: 768px) {
+            .mobile-only {
+                display: block;
+            }
             body {
                 overflow: auto !important;
                 height: auto !important;
@@ -324,7 +330,7 @@
                 width: 100%;
                 height: 100%;
                 z-index: 10;
-                transition: transform 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-right: none;
                 background: var(--bg-white);
             }
@@ -335,16 +341,34 @@
                 height: 100%;
                 z-index: 5;
                 transform: translateX(100%);
-                transition: transform 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             body.chat-open .chat-sidebar {
+                width: 280px;
+                z-index: 1000;
                 transform: translateX(-100%);
+                box-shadow: 5px 0 15px rgba(0,0,0,0.1);
             }
             body.chat-open .chat-main {
                 transform: translateX(0);
             }
+            body.chat-open.sidebar-active .chat-sidebar {
+                transform: translateX(0);
+            }
+            #mobile-chat-overlay {
+                display: none;
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.4);
+                z-index: 900;
+                backdrop-filter: blur(2px);
+                transition: opacity 0.3s;
+            }
+            body.chat-open.sidebar-active #mobile-chat-overlay {
+                display: block;
+            }
             .back-btn {
-                display: flex;
+                display: none; /* Changed to hamburger menu */
             }
             .message-bubble {
                 max-width: 85% !important;
@@ -427,6 +451,11 @@
                     </c:if>
                     <div class="chat-header" style="justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
+                            <!-- Hamburger Menu Toggle -->
+                            <button class="mobile-only" onclick="toggleMobileSidebar()" style="background: none; border: none; color: var(--text-color); font-size: 1.25rem; font-weight: 600; cursor: pointer; padding: 0;">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <!-- Default back button for those without JS or standard wide views -->
                             <button class="back-btn" onclick="goBackToSidebar()" title="Back to chats">
                                 <i class="fas fa-arrow-left"></i>
                             </button>
@@ -448,6 +477,8 @@
                     </div>
                     
                     <div style="position: relative; flex: 1; display:flex; flex-direction:column; overflow:hidden;">
+                        <!-- Mobile Backdrop -->
+                        <div id="mobile-chat-overlay" onclick="toggleMobileSidebar()"></div>
                         <!-- Video Overlay -->
                         <div id="video-overlay" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:100; flex-direction:column; align-items:center; justify-content:center; color:white;">
                             <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column;">
@@ -750,6 +781,9 @@
 <script>
 function goBackToSidebar() {
     document.body.classList.remove('chat-open');
+}
+function toggleMobileSidebar() {
+    document.body.classList.toggle('sidebar-active');
 }
 </script>
 </html>

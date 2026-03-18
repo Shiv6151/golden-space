@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 <!DOCTYPE html>
@@ -271,7 +271,7 @@
                     <div class="post-actions border-top" style="display:flex; justify-content:space-between; padding: 0.75rem 0;">
                         <button class="action-btn" id="modal-like-btn" onclick="" style="flex:1;"><i class="far fa-heart"></i> Like</button>
                         <button class="action-btn" onclick="document.getElementById('modal-comment-input').focus()" style="flex:1;"><i class="far fa-comment"></i> Comment</button>
-                        <button class="action-btn" style="flex:1;"><i class="far fa-paper-plane"></i> Share</button>
+                        <button class="action-btn" onclick="openShareModal(window.currentModalPost.postId)" style="flex:1;"><i class="far fa-paper-plane"></i> Share</button>
                     </div>
 
                     <div id="modal-comments-area" class="border-top" style="padding-top: 1rem;">
