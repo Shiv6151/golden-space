@@ -29,7 +29,7 @@
                 <span id="msg-badge" style="display:none; position:absolute; top:-4px; right:-6px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
             </a>
             <a href="ProfileServlet" class="nav-link" title="Profile">
-                <img src="${sessionScope.user.profilePhoto != null &amp;&amp; sessionScope.user.profilePhoto.startsWith('http') ? sessionScope.user.profilePhoto : pageContext.request.contextPath.concat('/').concat(sessionScope.user.profilePhoto != null ? sessionScope.user.profilePhoto : 'images/default-avatar.png')}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); cursor: pointer;">
+                <img src="${sessionScope.user.profilePhoto != null && sessionScope.user.profilePhoto.startsWith('http') ? sessionScope.user.profilePhoto : pageContext.request.contextPath.concat('/').concat(sessionScope.user.profilePhoto != null ? sessionScope.user.profilePhoto : 'images/default-avatar.png')}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); cursor: pointer;">
             </a>
         </div>
     </div>
