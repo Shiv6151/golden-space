@@ -1,4 +1,4 @@
-﻿// Core Application JavaScript
+// Core Application JavaScript
 
 function getImageUrl(path) {
     if (!path) return (window.contextPath || '') + '/images/placeholder.png';
@@ -14,35 +14,43 @@ function getImageUrl(path) {
 function openShareModal(postId) {
     document.getElementById('share-post-id-input').value = postId;
     document.getElementById('sharePostModal').style.display = 'flex';
-    document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>';
+    document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading followers...</div>';
     
     fetch((window.contextPath || '') + '/InteractionServlet', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=getAcceptedFriends'
+        body: 'action=getFollowers&targetId=' + window.currentUserId
     })
     .then(res => res.json())
-    .then(friends => {
+    .then(followers => {
         let html = '';
-        if (friends.length === 0) {
-            html = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No friends available to share with.</div>';
+        if (followers.length === 0) {
+            html = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No followers available to share with.</div>';
         } else {
-            friends.forEach(f => {
+            html += '<div style="max-height: 280px; overflow-y: auto; display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; padding: 1rem;">';
+            followers.forEach(f => {
                 const photo = getImageUrl(f.photo);
                 html += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border-bottom:1px solid var(--border-color);">
-                        <div style="display:flex; align-items:center; gap:0.75rem;">
-                            <img src="\${photo}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-                            <span style="font-weight:600;">\${f.name}</span>
+                    <label style="display:flex; flex-direction:column; align-items:center; cursor:pointer; text-align:center; padding: 0.5rem; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;" onchange="this.style.borderColor = this.querySelector('input').checked ? 'var(--primary-color)' : 'transparent'; this.style.background = this.querySelector('input').checked ? 'rgba(255,71,87,0.05)' : 'transparent';">
+                        <div style="position:relative; margin-bottom: 0.5rem;">
+                            <img src="\${photo}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
+                            <input type="checkbox" class="share-follower-checkbox" value="\${f.id}" style="position:absolute; bottom:0; right:0; width: 18px; height: 18px; cursor:pointer; accent-color: var(--primary-color);">
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="sendPostShare(\${f.id}, this)">Send</button>
-                    </div>
+                        <span style="font-weight:600; font-size: 0.85rem; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">\${f.name || f.username}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@\${f.username}</span>
+                    </label>
                 `;
             });
+            html += '</div>';
+            html += `
+                <div style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="sendPostShareToSelected(this)" style="width: 100%; font-weight: 600; padding: 0.75rem; border-radius: 30px;"><i class="far fa-paper-plane" style="margin-right:0.5rem;"></i> Send to Selected</button>
+                </div>
+            `;
         }
         document.getElementById('share-friends-list').innerHTML = html;
     }).catch(err => {
-        document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--danger-color);">Error loading friends</div>';
+        document.getElementById('share-friends-list').innerHTML = '<div style="padding:1rem; text-align:center; color:var(--danger-color);">Error loading followers</div>';
     });
 }
 
@@ -50,37 +58,41 @@ function closeShareModal() {
     document.getElementById('sharePostModal').style.display = 'none';
 }
 
-function sendPostShare(friendId, btn) {
+function sendPostShareToSelected(btn) {
     const postId = document.getElementById('share-post-id-input').value;
+    const checkboxes = document.querySelectorAll('.share-follower-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert("Please select at least one follower to share with.");
+        return;
+    }
+    
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
     
-    const formData = new URLSearchParams();
-    formData.append('receiverId', friendId);
-    formData.append('messageText', '[POST_SHARE:' + postId + ']');
-    formData.append('ajax', 'true');
+    let promises = [];
+    checkboxes.forEach(cb => {
+        const formData = new URLSearchParams();
+        formData.append('receiverId', cb.value);
+        formData.append('messageText', '[POST_SHARE:' + postId + ']');
+        formData.append('ajax', 'true');
+        formData.append('action', 'send');
+        
+        let promise = fetch((window.contextPath || '') + '/MessageServlet', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData.toString()
+        });
+        promises.push(promise);
+    });
     
-    fetch((window.contextPath || '') + '/MessageServlet', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: formData.toString()
-    })
-    .then(res => {
-        if (res.ok) {
-            btn.innerText = 'Sent';
-            btn.classList.add('btn-success');
-            btn.classList.remove('btn-primary');
-            btn.style.background = '#2ecc71';
-            btn.style.color = 'white';
-            btn.style.border = 'none';
-        } else {
-            btn.innerText = 'Error';
-            btn.disabled = false;
-        }
-    })
-    .catch(() => {
-        btn.innerText = 'Send';
+    Promise.all(promises).then(results => {
+        closeShareModal();
+        alert('Post shared successfully to ' + checkboxes.length + ' followers!');
+    }).catch(err => {
         btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert('Failed to share post with some followers.');
     });
 }
 

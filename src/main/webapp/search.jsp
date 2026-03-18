@@ -88,10 +88,9 @@
                             <p class="text-muted">No posts found for "${searchQuery}"</p>
                         </div>
                     </c:if>
-                    <c:forEach var="post" items="${postResults}">
-                        <jsp:include page="components/post.jsp">
-                            <jsp:param name="postId" value="${post.postId}"/>
-                        </jsp:include>
+                    <c:forEach var="searchPost" items="${postResults}">
+                        <c:set var="post" value="${searchPost}" scope="request" />
+                        <jsp:include page="components/post.jsp" />
                     </c:forEach>
                 </div>
             </c:when>

@@ -1,4 +1,5 @@
-﻿<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <script>
     // Priority theme bootstrapper to prevent flicker
     (function() {
@@ -6,14 +7,32 @@
         document.documentElement.setAttribute('data-theme', theme);
     })();
 </script>
+<style>
+    .nav-link.active {
+        color: var(--primary-color) !important;
+        position: relative;
+    }
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 15px;
+        height: 3px;
+        background-color: var(--primary-color);
+        border-radius: 3px;
+    }
+</style>
 <nav class="navbar">
     <div class="nav-container" style="justify-content: center;">
+        <c:set var="uri" value="${pageContext.request.requestURI}" />
         <div style="display: flex; align-items: center; justify-content: center; gap: 2rem;">
-            <a href="FeedServlet" class="nav-link" title="Home"><i class="fas fa-home fa-lg"></i></a>
-            <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link" title="Search"><i class="fas fa-search fa-lg"></i></a>
-            <a href="${pageContext.request.contextPath}/create_post.jsp" class="nav-link" title="Add Post"><i class="fas fa-plus fa-lg"></i></a>
+            <a href="FeedServlet" class="nav-link ${fn:contains(uri, 'FeedServlet') ? 'active' : ''}" title="Home"><i class="fas fa-home fa-lg"></i></a>
+            <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link ${fn:contains(uri, 'search.jsp') ? 'active' : ''}" title="Search"><i class="fas fa-search fa-lg"></i></a>
+            <a href="${pageContext.request.contextPath}/create_post.jsp" class="nav-link ${fn:contains(uri, 'create_post.jsp') ? 'active' : ''}" title="Add Post"><i class="fas fa-plus fa-lg"></i></a>
             <div class="nav-item-dropdown" style="position:relative;" id="notif-nav-wrapper">
-                <a href="NotificationServlet" class="nav-link" title="Notifications" id="heart-notification-btn">
+                <a href="javascript:void(0)" class="nav-link ${fn:contains(uri, 'NotificationServlet') || fn:contains(uri, 'notifications.jsp') ? 'active' : ''}" title="Notifications" id="heart-notification-btn" onclick="toggleFriendRequestsDropdown()">
                     <i class="fas fa-heart fa-lg"></i>
                     <span id="heart-notif-dot" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
                 </a>
@@ -24,11 +43,11 @@
                     </div>
                 </div>
             </div>
-            <a href="MessageServlet" class="nav-link" title="Messages" style="position:relative;">
+            <a href="MessageServlet" class="nav-link ${fn:contains(uri, 'MessageServlet') || fn:contains(uri, 'messages.jsp') ? 'active' : ''}" title="Messages" style="position:relative;">
                 <i class="fab fa-facebook-messenger fa-lg"></i>
                 <span id="msg-badge" style="display:none; position:absolute; top:-4px; right:-6px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
             </a>
-            <a href="ProfileServlet" class="nav-link" title="Profile">
+            <a href="ProfileServlet" class="nav-link ${fn:contains(uri, 'ProfileServlet') || fn:contains(uri, 'profile.jsp') ? 'active' : ''}" title="Profile">
                 <img src="${sessionScope.user.profilePhoto != null && sessionScope.user.profilePhoto.startsWith('http') ? sessionScope.user.profilePhoto : pageContext.request.contextPath.concat('/').concat(sessionScope.user.profilePhoto != null ? sessionScope.user.profilePhoto : 'images/default-avatar.png')}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); cursor: pointer;">
             </a>
         </div>
@@ -37,13 +56,11 @@
 
 <script>
     window.contextPath = '${pageContext.request.contextPath}';
-
-    window.contextPath = '${pageContext.request.contextPath}';
+    window.currentUserId = '${sessionScope.user.userId}';
 
     function checkPendingRequests() {
         const msgBadge = document.getElementById('msg-badge');
-        const friendBadge = document.getElementById('friend-request-badge');
-        if (!msgBadge && !friendBadge) return;
+        const heartDot = document.getElementById('heart-notif-dot');
         
         fetch('${pageContext.request.contextPath}/InteractionServlet', {
             method: 'POST',
@@ -56,19 +73,16 @@
                 if (msgBadge) {
                     msgBadge.style.display = data.unreadMessages > 0 ? 'block' : 'none';
                 }
-                const heartDot = document.getElementById('heart-notif-dot');
                 if (heartDot) {
                     heartDot.style.display = data.unreadNotifications > 0 ? 'block' : 'none';
                 }
             }
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error('Error checking requests:', err));
     }
 
     function toggleFriendRequestsDropdown() {
         const dropdown = document.getElementById('friend-requests-dropdown');
-        const list = document.getElementById('dropdown-request-list');
-        
         if (dropdown.style.display === 'none') {
             dropdown.style.display = 'block';
             fetchRequests();
@@ -86,7 +100,7 @@
         })
         .then(res => res.json())
         .then(data => {
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 list.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No new notifications</div>';
             } else {
                 let html = '';
@@ -144,12 +158,11 @@
             if (res.ok) {
                 container.style.opacity = '0.5';
                 container.innerHTML = `<div style="padding:1rem; text-align:center; color:var(--text-muted); width:100%;">Request ${action}ed</div>`;
-                checkPendingRequests(); // Update count dots
+                checkPendingRequests();
             }
         });
     }
     
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('friend-requests-dropdown');
         const btn = document.getElementById('heart-notification-btn');
@@ -158,27 +171,21 @@
         }
     });
     
-    // Check on load and poll every 15 seconds for real-time notifications
     document.addEventListener('DOMContentLoaded', function() {
         checkPendingRequests();
-        setInterval(checkPendingRequests, 15000); // Poll every 15 seconds
+        setInterval(checkPendingRequests, 15000);
     });
 </script>
 
-<!-- Share Post Modal (Global) -->
+<!-- Share Post Modal (Global) - Handled by app_v2.js -->
 <div id="sharePostModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:2000;">
     <div class="modal-content card" style="max-width:520px; width:95%; padding:0; position:relative; overflow:hidden; border-radius:16px;">
         <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0; font-size:1.1rem; font-weight:700;">Send Post To...</h3>
             <button onclick="closeShareModal()" style="background:var(--bg-light); border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
         </div>
-        <div id="share-friends-list" style="padding:1rem; max-height:360px; overflow-y:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
-            <div style="grid-column:1/-1; padding:1rem; text-align:center; color:var(--text-muted);">Loading friends...</div>
-        </div>
-        <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color); background:var(--bg-white);">
-            <button id="share-send-btn" onclick="sendPostShareToSelected()" class="btn btn-primary w-100" style="border-radius:8px; padding:0.6rem;">
-                <i class="far fa-paper-plane"></i> Send
-            </button>
+        <div id="share-friends-list" style="padding:0; max-height:360px; overflow-y:auto;">
+            <!-- Content dynamically generated by app_v2.js -->
         </div>
         <input type="hidden" id="share-post-id-input" value="">
     </div>

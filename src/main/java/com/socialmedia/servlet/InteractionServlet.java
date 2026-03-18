@@ -194,7 +194,8 @@ public class InteractionServlet extends HttpServlet {
                 out.print("\"userName\": \"" + post.getUserName() + "\",");
                 out.print("\"userHandle\": \"" + post.getUserHandle() + "\",");
                 out.print("\"userPhoto\": \"" + (post.getUserPhoto() != null ? post.getUserPhoto() : "images/default-avatar.png") + "\",");
-                out.print("\"postContent\": \"" + post.getPostContent().replace("\"", "\\\"").replace("\n", "\\n") + "\",");
+                String safeContent = post.getPostContent() != null ? post.getPostContent().replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "") : "";
+                out.print("\"postContent\": \"" + safeContent + "\",");
                 out.print("\"likeCount\": " + post.getLikeCount() + ",");
                 out.print("\"commentCount\": " + post.getCommentCount() + ",");
                 out.print("\"likedByCurrentUser\": " + post.isLikedByCurrentUser() + ",");
@@ -217,7 +218,8 @@ public class InteractionServlet extends HttpServlet {
                     out.print("\"userName\": \"" + c.getUserName() + "\",");
                     out.print("\"userId\": " + c.getUserId() + ",");
                     out.print("\"userPhoto\": \"" + (c.getUserPhoto() != null ? c.getUserPhoto() : "images/default-avatar.png") + "\",");
-                    out.print("\"commentText\": \"" + c.getCommentText().replace("\"", "\\\"").replace("\n", "\\n") + "\"");
+                    String safeComment = c.getCommentText() != null ? c.getCommentText().replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "") : "";
+                    out.print("\"commentText\": \"" + safeComment + "\"");
                     out.print("}");
                     if (i < post.getComments().size() - 1) out.print(",");
                 }
