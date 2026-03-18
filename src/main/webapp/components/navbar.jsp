@@ -1,4 +1,4 @@
-<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+﻿<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <script>
     // Priority theme bootstrapper to prevent flicker
     (function() {
@@ -7,46 +7,31 @@
     })();
 </script>
 <nav class="navbar">
-    <div class="nav-container">
-        <div class="nav-left" style="flex: 1; display:flex; justify-content:flex-start;">
-            <!-- Brand text removed as requested -->
-        </div>
-        
-        <div class="nav-center" style="flex: 1.5; display: flex; justify-content: center;">
-            <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link" title="Search" style="background: var(--bg-light); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-search"></i>
-            </a>
-        </div>
-        
-        <div class="nav-right" style="flex: 1; display:flex; justify-content:flex-end; align-items:center; gap: 2rem;">
+    <div class="nav-container" style="justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 2rem;">
             <a href="FeedServlet" class="nav-link" title="Home"><i class="fas fa-home fa-lg"></i></a>
+            <a href="${pageContext.request.contextPath}/search.jsp" class="nav-link" title="Search"><i class="fas fa-search fa-lg"></i></a>
             <a href="${pageContext.request.contextPath}/create_post.jsp" class="nav-link" title="Add Post"><i class="fas fa-plus fa-lg"></i></a>
-            
-            <!-- Heart Icon with Notification Dot -->
             <div class="nav-item-dropdown" style="position:relative;">
                 <a href="javascript:void(0)" class="nav-link" title="Notifications" id="heart-notification-btn" onclick="toggleFriendRequestsDropdown()">
                     <i class="fas fa-heart fa-lg"></i>
                     <span id="heart-notif-dot" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
                 </a>
-                
-                <!-- Friend Requests Dropdown -->
-                <div id="friend-requests-dropdown" class="card dropdown-panel" style="display:none; position:absolute; top:40px; right:0; width:320px; max-height:400px; overflow-y:auto; z-index:1000; padding:0; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+                <div id="friend-requests-dropdown" class="card dropdown-panel" style="display:none; position:absolute; top:40px; right:-80px; width:320px; max-height:400px; overflow-y:auto; z-index:1000; padding:0; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
                     <div style="padding:1rem; border-bottom:1px solid var(--border-color); font-weight:700;">Notifications</div>
                     <div id="dropdown-request-list">
                         <div style="padding:2rem; text-align:center; color:var(--text-muted);">Loading...</div>
                     </div>
                 </div>
             </div>
-
             <a href="MessageServlet" class="nav-link" title="Messages" style="position:relative;">
                 <i class="fab fa-facebook-messenger fa-lg"></i>
                 <span id="msg-badge" style="display:none; position:absolute; top:-4px; right:-6px; background:var(--danger-color, red); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg-white, white); z-index:10;"></span>
             </a>
             <a href="ProfileServlet" class="nav-link" title="Profile">
-                <img src="${sessionScope.user.profilePhoto != null && sessionScope.user.profilePhoto.startsWith('http') ? sessionScope.user.profilePhoto : pageContext.request.contextPath.concat('/').concat(sessionScope.user.profilePhoto != null ? sessionScope.user.profilePhoto : 'images/default-avatar.png')}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); cursor: pointer;">
+                <img src="${sessionScope.user.profilePhoto != null &amp;&amp; sessionScope.user.profilePhoto.startsWith('http') ? sessionScope.user.profilePhoto : pageContext.request.contextPath.concat('/').concat(sessionScope.user.profilePhoto != null ? sessionScope.user.profilePhoto : 'images/default-avatar.png')}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); cursor: pointer;">
             </a>
         </div>
-
     </div>
 </nav>
 

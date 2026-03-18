@@ -513,7 +513,7 @@
                     <input type="hidden" id="currentChatUserId" value="${chatUser.userId}">
                     <input type="hidden" id="currentUserId" value="${sessionScope.user.userId}">
                     
-                    <div class="chat-input-area" style="position: relative;">
+                    <div class="chat-input-area" style="position: relative; display: flex; flex-direction: column; padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); background: var(--bg-white);">
                         <!-- Preview container -->
                         <div id="attachment-preview-container" style="display: none; padding: 8px 12px; background: var(--bg-light); border-radius: 8px; margin-bottom: 8px; align-items: center; justify-content: space-between; border: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -524,19 +524,18 @@
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
-                        
-                        <form action="MessageServlet" method="POST" class="chat-form" enctype="multipart/form-data" id="chatFormObject">
+
+                        <form action="MessageServlet" method="POST" class="chat-form" enctype="multipart/form-data" id="chatFormObject" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
                             <input type="hidden" name="receiverId" value="${chatUser.userId}">
-                            
                             <input type="file" name="attachment" id="chat-attachment" accept="image/*,video/*,application/pdf" style="display: none;" onchange="handleChatAttachmentPreview(this)">
-                            
-                            <button type="button" class="btn btn-outline" style="border-radius: 50%; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; border: none; background: var(--bg-light); color: var(--primary-color);" onclick="document.getElementById('chat-attachment').click()" title="Attach File">
+
+                            <button type="button" class="btn btn-outline" style="flex-shrink:0; border-radius: 50%; width: 42px; height: 42px; padding: 0; display:flex; justify-content:center; align-items:center; border: none; background: var(--bg-light); color: var(--primary-color);" onclick="document.getElementById('chat-attachment').click()" title="Attach File">
                                 <i class="fas fa-plus"></i>
                             </button>
 
-                            <input type="text" name="messageText" class="form-input" placeholder="Type a message..." autocomplete="off" style="flex: 1; border-radius: 2rem;">
-                            
-                            <button type="submit" class="btn btn-primary" style="border-radius: 50%; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center;" onclick="showSendingIndicator(this)">
+                            <input type="text" name="messageText" class="form-input" placeholder="Type a message..." autocomplete="off" style="flex: 1; border-radius: 2rem; min-width: 0;">
+
+                            <button type="submit" class="btn btn-primary" style="flex-shrink:0; border-radius: 50%; width: 42px; height: 42px; padding: 0; display:flex; justify-content:center; align-items:center;" onclick="showSendingIndicator(this)">
                                 <i class="fas fa-paper-plane" id="chat-send-icon"></i>
                             </button>
                         </form>
