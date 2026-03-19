@@ -329,14 +329,22 @@
                 top: 0; left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 100; /* Higher z-index for sidebar */
+                z-index: 100;
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-right: none;
                 background: var(--bg-white);
                 display: flex;
                 flex-direction: column;
-                overflow-y: auto !important; /* Force scrollable */
+                overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
+            }
+            .friend-item {
+                padding: 0.75rem 1rem !important;
+                gap: 0.75rem !important;
+            }
+            .friend-item img {
+                width: 42px !important;
+                height: 42px !important;
             }
             .chat-main {
                 position: absolute;
@@ -350,16 +358,17 @@
                 flex-direction: column;
             }
             body.chat-open .chat-sidebar {
-                width: 280px;
-                z-index: 1000;
                 transform: translateX(-100%);
-                box-shadow: 5px 0 15px rgba(0,0,0,0.1);
             }
             body.chat-open .chat-main {
                 transform: translateX(0);
+                z-index: 200;
             }
             body.chat-open.sidebar-active .chat-sidebar {
                 transform: translateX(0);
+                width: 85%;
+                z-index: 1000;
+                box-shadow: 5px 0 25px rgba(0,0,0,0.2);
             }
             #mobile-chat-overlay {
                 display: none;
@@ -425,9 +434,9 @@
             
             <c:forEach var="friend" items="${friends}">
                 <a href="MessageServlet?with=${friend.userId}" class="friend-item ${friend.userId == chatUser.userId ? 'active' : ''}">
-                    <img src="${friend.profilePhoto != null && friend.profilePhoto.startsWith('http') ? friend.profilePhoto : pageContext.request.contextPath.concat('/').concat(friend.profilePhoto != null ? friend.profilePhoto : 'images/default-avatar.png')}" class="post-avatar">
+                    <img src="${friend.profilePhoto != null && friend.profilePhoto.startsWith('http') ? friend.profilePhoto : pageContext.request.contextPath.concat('/').concat(friend.profilePhoto != null ? friend.profilePhoto : 'images/default-avatar.png')}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: ${friend.unreadCount > 0 ? '700' : '500'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${friend.name}</div>
+                        <div style="font-weight: ${friend.unreadCount > 0 ? '700' : '600'}; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">${friend.name}</div>
                         <c:if test="${friend.unreadCount > 0}">
                             <div style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-top: 1px;">
                                 <c:choose>

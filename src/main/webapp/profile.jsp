@@ -60,7 +60,35 @@
             .card { padding: 1rem !important; }
             .timeline-item { padding-bottom: 1rem !important; }
             .form-grid { grid-template-columns: 1fr !important; }
-            .ig-profile-header { gap: 0.5rem !important; }
+            .ig-profile-header { 
+                flex-direction: column !important; 
+                align-items: flex-start !important;
+                gap: 1rem !important;
+                padding: 1.5rem 1rem !important;
+            }
+            .ig-avatar-section {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 1.5rem !important;
+                width: 100% !important;
+            }
+            .ig-avatar { width: 80px !important; height: 80px !important; }
+            .ig-username { margin: 0 !important; font-size: 1.25rem !important; }
+            .ig-info-section { width: 100% !important; }
+            .ig-stats-row { 
+                justify-content: space-around !important; 
+                border-top: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color);
+                padding: 0.75rem 0 !important;
+                margin: 1rem 0 !important;
+            }
+            .ig-user-row .btn { 
+                width: 100% !important; 
+                justify-content: center !important;
+                padding: 0.6rem !important;
+            }
+            .ig-user-row { width: 100% !important; }
+            .profile-headline { font-size: 0.95rem !important; }
         }
         
         /* Professional Form Styling */
@@ -111,20 +139,20 @@
             </div>
             
             <div class="ig-info-section">
-                <div class="ig-bio-section" style="margin-bottom: 1.5rem;">
-                    <div class="ig-full-name" style="font-size: 1.5rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                <div class="ig-bio-section" style="margin-bottom: 1rem;">
+                    <div class="ig-full-name" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.15rem;">
                         ${profileUser.name}
                     </div>
                     <c:if test="${not empty profileUser.headline}">
-                        <div class="profile-headline" style="font-weight: 500; color: var(--text-main); margin-bottom: 0.5rem; font-size: 1.1rem;">
+                        <div class="profile-headline" style="color: var(--text-main); margin-bottom: 0.5rem; font-size: 1rem; line-height: 1.3;">
                             ${profileUser.headline}
                         </div>
                     </c:if>
-                    <div class="ig-bio-text">${profileUser.bio != null ? profileUser.bio : "No bio available."}</div>
-                    <div class="ig-joined-date" style="margin-top: 0.5rem;"><i class="far fa-calendar-alt"></i> Joined <fmt:formatDate value="${profileUser.createdAt}" pattern="MMMM yyyy" /></div>
+                    <div class="ig-bio-text" style="font-size: 0.9rem; line-height: 1.4;">${profileUser.bio != null ? profileUser.bio : "No bio available."}</div>
+                    <div class="ig-joined-date" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><i class="far fa-calendar-alt"></i> Joined <fmt:formatDate value="${profileUser.createdAt}" pattern="MMMM yyyy" /></div>
                 </div>
 
-                <div class="ig-stats-row" style="margin-bottom: 1.5rem;">
+                <div class="ig-stats-row">
                     <div class="ig-stat">
                         <strong>${postCount != null ? postCount : 0}</strong>
                         <span>posts</span>
@@ -142,26 +170,26 @@
                 <div class="ig-user-row">
                     <c:choose>
                         <c:when test="${isSelf}">
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <button class="btn btn-outline btn-sm" onclick="toggleEditModal()">Edit Profile</button>
-                                <button class="action-btn" onclick="toggleSettingsModal()" title="Settings" style="padding:4px 8px; background:none; border:none; cursor:pointer;"><i class="fas fa-cog fa-lg"></i></button>
+                            <div style="display:flex; gap:0.5rem; width: 100%;">
+                                <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="toggleEditModal()">Edit Profile</button>
+                                <button class="action-btn" onclick="toggleSettingsModal()" title="Settings" style="padding:8px; display: flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer;"><i class="fas fa-cog fa-lg"></i></button>
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <div style="display:flex; gap:0.5rem; width: 100%;">
                                 <c:choose>
                                     <c:when test="${isFollowing}">
-                                        <button class="btn btn-outline btn-sm" id="follow-action-btn" onclick="removeFollow('${profileUser.userId}', this)">Unfollow</button>
+                                        <button class="btn btn-outline btn-sm" style="flex: 1;" id="follow-action-btn" onclick="removeFollow('${profileUser.userId}', this)">Unfollow</button>
                                     </c:when>
                                     <c:when test="${isRequestPending}">
-                                        <button class="btn btn-outline btn-sm" id="follow-action-btn" onclick="cancelFollowRequest('${profileUser.userId}', this)" style="background:var(--bg-light); color:var(--text-muted);">Requested</button>
+                                        <button class="btn btn-outline btn-sm" style="flex: 1;" id="follow-action-btn" onclick="cancelFollowRequest('${profileUser.userId}', this)" style="background:var(--bg-light); color:var(--text-muted);">Requested</button>
                                     </c:when>
                                     <c:otherwise>
-                                        <button class="btn btn-primary btn-sm" id="follow-action-btn" onclick="openConnectModal()">Connect</button>
+                                        <button class="btn btn-primary btn-sm" style="flex: 1;" id="follow-action-btn" onclick="openConnectModal()">Connect</button>
                                     </c:otherwise>
                                 </c:choose>
                                 <c:if test="${isMutualFollowing}">
-                                    <a href="MessageServlet?with=${profileUser.userId}" class="btn btn-outline btn-sm">Message</a>
+                                    <a href="MessageServlet?with=${profileUser.userId}" class="btn btn-outline btn-sm" style="flex: 1; text-align: center; text-decoration: none;">Message</a>
                                 </c:if>
                             </div>
                         </c:otherwise>
@@ -173,7 +201,7 @@
         <c:if test="${isSelf}">
             <!-- Professional Dashboard / Analytics -->
             <div class="main-container" style="max-width: 935px; margin-top: 1rem; padding: 0 1rem;">
-                <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--primary-light, #fdf2f8) 0%, #ffffff 100%); border: 1px solid var(--primary-color); border-opacity: 0.2;">
+                <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--primary-light, #fdf2f8) 0%, #ffffff 100%); border: 1px solid var(--border-color);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <h3 style="margin: 0; color: var(--primary-dark); font-size: 1.25rem;">Analytics Dashboard</h3>
