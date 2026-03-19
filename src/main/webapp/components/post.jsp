@@ -193,7 +193,7 @@
 
     <!-- Action Buttons: Like | Comment | Share — all in one row -->
     <div style="display:flex; align-items:center; border-top:1px solid var(--border-color); padding-top:0.5rem;">
-        <button id="like-btn-${post.postId}" type="button" class="action-btn text-muted" onclick="toggleLike('${post.postId}', true)" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Like this post">
+        <button id="like-btn-${post.postId}" type="button" class="action-btn text-muted" onclick="toggleLike('${post.postId}', false)" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Like this post">
             <i id="like-icon-${post.postId}" class="fa${post.likedByCurrentUser ? 's' : 'r'} fa-heart" style="color:${post.likedByCurrentUser ? '#ff4757' : 'inherit'};"></i> Like
         </button>
         <button type="button" class="action-btn text-muted" onclick="toggleComments('${post.postId}')" style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:0.4rem;" title="Comment on this post">

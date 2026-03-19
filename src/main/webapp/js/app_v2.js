@@ -231,16 +231,24 @@ function toggleLike(postId, showAnimation = false) {
     const icon = document.getElementById('like-icon-' + postId);
     const countSpan = document.getElementById('like-count-' + postId);
     
-    // Optimistic UI update
-    const isLiked = icon.style.color === 'rgb(255, 71, 87)' || icon.style.color === '#ff4757';
-    let currentCount = parseInt(countSpan.innerText);
+    // Robust detection: check for solid class OR the specific red color
+    const isLiked = icon.classList.contains('fas') || 
+                    icon.style.color === 'rgb(255, 71, 87)' || 
+                    icon.style.color === '#ff4757';
+                    
+    let currentCount = parseInt(countSpan.innerText) || 0;
     
     if (isLiked && !showAnimation) {
-        // Only unlike if it's already liked AND not a double-click
+        // Unlike action: explicitly requested via button click
         icon.style.color = 'inherit';
+        icon.classList.remove('fas');
+        icon.classList.add('far');
         countSpan.innerText = Math.max(0, currentCount - 1);
     } else if (!isLiked) {
+        // Like action
         icon.style.color = '#ff4757';
+        icon.classList.remove('far');
+        icon.classList.add('fas');
         countSpan.innerText = currentCount + 1;
     }
 
