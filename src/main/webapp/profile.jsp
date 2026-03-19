@@ -56,7 +56,38 @@
             .ig-avatar { width: 70px !important; height: 70px !important; }
             .ig-stats { gap: 1rem !important; }
             .profile-grid { gap: 1px !important; }
+            /* Mobile adjustments for professional sections */
+            .card { padding: 1rem !important; }
+            .timeline-item { padding-bottom: 1rem !important; }
+            .form-grid { grid-template-columns: 1fr !important; }
+            .ig-profile-header { gap: 0.5rem !important; }
         }
+        
+        /* Professional Form Styling */
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-light);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+        .mb-3 { margin-bottom: 1.25rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     </style>
 </head>
 <body>
@@ -209,7 +240,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Experience</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()"><i class="fas fa-plus"></i> Add</button>
+                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()" style="min-width: 120px;"><i class="fas fa-plus"></i> Add Experience</button>
                     </c:if>
                 </div>
                 <div id="experience-list">
@@ -245,7 +276,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Education</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-outline btn-sm" onclick="openEducationModal()"><i class="fas fa-plus"></i> Add Education</button>
+                        <button class="btn btn-outline btn-sm" onclick="openAddEducationModal()" style="min-width: 120px;"><i class="fas fa-plus"></i> Add Education</button>
                     </c:if>
                 </div>
                 <div id="education-list">
@@ -755,7 +786,7 @@
                     <label class="form-label">Location</label>
                     <input type="text" name="location" class="form-input" placeholder="e.g. Remote / New York">
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;" class="mb-3">
+                <div class="form-grid mb-3">
                     <div>
                         <label class="form-label">Start Date</label>
                         <input type="date" name="startDate" class="form-input" required>
@@ -797,7 +828,7 @@
                     <label class="form-label">Field of Study</label>
                     <input type="text" name="fieldOfStudy" class="form-input" placeholder="e.g. Computer Science">
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;" class="mb-3">
+                <div class="form-grid mb-3">
                     <div>
                         <label class="form-label">Start Date</label>
                         <input type="date" name="startDate" class="form-input" required>
