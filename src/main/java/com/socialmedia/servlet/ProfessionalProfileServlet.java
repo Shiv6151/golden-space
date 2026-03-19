@@ -80,6 +80,24 @@ public class ProfessionalProfileServlet extends HttpServlet {
                 boolean success = experienceDAO.deleteExperience(id, currentUser.getUserId());
                 out.print(success ? "success" : "error");
 
+            } else if ("updateExperience".equals(action)) {
+                Experience exp = new Experience();
+                exp.setId(Integer.parseInt(request.getParameter("id")));
+                exp.setUserId(currentUser.getUserId());
+                exp.setCompany(request.getParameter("company"));
+                exp.setTitle(request.getParameter("title"));
+                exp.setLocation(request.getParameter("location"));
+                exp.setStartDate(dateFormat.parse(request.getParameter("startDate")));
+                String endDateStr = request.getParameter("endDate");
+                if (endDateStr != null && !endDateStr.isEmpty()) {
+                    exp.setEndDate(dateFormat.parse(endDateStr));
+                }
+                exp.setDescription(request.getParameter("description"));
+                exp.setCurrent("true".equals(request.getParameter("isCurrent")));
+                
+                boolean success = experienceDAO.updateExperience(exp);
+                out.print(success ? "success" : "error");
+
             } else if ("addEducation".equals(action)) {
                 Education edu = new Education();
                 edu.setUserId(currentUser.getUserId());
@@ -101,6 +119,23 @@ public class ProfessionalProfileServlet extends HttpServlet {
                 boolean success = educationDAO.deleteEducation(id, currentUser.getUserId());
                 out.print(success ? "success" : "error");
                 
+            } else if ("updateEducation".equals(action)) {
+                Education edu = new Education();
+                edu.setId(Integer.parseInt(request.getParameter("id")));
+                edu.setUserId(currentUser.getUserId());
+                edu.setSchool(request.getParameter("school"));
+                edu.setDegree(request.getParameter("degree"));
+                edu.setFieldOfStudy(request.getParameter("fieldOfStudy"));
+                edu.setStartDate(dateFormat.parse(request.getParameter("startDate")));
+                String endDateStr = request.getParameter("endDate");
+                if (endDateStr != null && !endDateStr.isEmpty()) {
+                    edu.setEndDate(dateFormat.parse(endDateStr));
+                }
+                edu.setDescription(request.getParameter("description"));
+                
+                boolean success = educationDAO.updateEducation(edu);
+                out.print(success ? "success" : "error");
+
             } else if ("updateProfessionalInfo".equals(action)) {
                 currentUser.setHeadline(request.getParameter("headline"));
                 currentUser.setProfessionalSummary(request.getParameter("summary"));

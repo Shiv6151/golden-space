@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -268,7 +269,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Experience</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()" style="min-width: 120px;"><i class="fas fa-plus"></i> Add Experience</button>
+                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()" style="min-width: 120px; width: auto !important; white-space: nowrap;"><i class="fas fa-plus"></i> Add Experience</button>
                     </c:if>
                 </div>
                 <div id="experience-list">
@@ -287,7 +288,19 @@
                                     </div>
                                     <div style="margin-top: 0.5rem; line-height: 1.5;">${exp.description}</div>
                                     <c:if test="${isSelf}">
-                                        <button class="action-btn text-danger" onclick="deleteExperience('${exp.id}')" style="position: absolute; top: 0; right: 0; padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        <div style="position: absolute; top: 0; right: 0; display: flex; gap: 0.5rem;">
+                                            <button class="action-btn text-muted edit-exp-btn" 
+                                                    data-id="${exp.id}"
+                                                    data-company="${fn:escapeXml(exp.company)}"
+                                                    data-title="${fn:escapeXml(exp.title)}"
+                                                    data-location="${fn:escapeXml(exp.location)}"
+                                                    data-start="<fmt:formatDate value="${exp.startDate}" pattern="yyyy-MM-dd" />"
+                                                    data-end="<fmt:formatDate value="${exp.endDate}" pattern="yyyy-MM-dd" />"
+                                                    data-current="${exp.current}"
+                                                    data-desc="${fn:escapeXml(exp.description)}"
+                                                    onclick="openEditExperienceModal(this)" style="padding: 5px;" title="Edit"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn text-danger" onclick="deleteExperience('${exp.id}')" style="padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
                                     </c:if>
                                 </div>
                             </c:forEach>
@@ -304,7 +317,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Education</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-outline btn-sm" onclick="openAddEducationModal()" style="min-width: 120px;"><i class="fas fa-plus"></i> Add Education</button>
+                        <button class="btn btn-outline btn-sm" onclick="openAddEducationModal()" style="min-width: 120px; width: auto !important; white-space: nowrap;"><i class="fas fa-plus"></i> Add Education</button>
                     </c:if>
                 </div>
                 <div id="education-list">
@@ -325,7 +338,18 @@
                                         <div style="margin-top: 0.5rem; line-height: 1.5;">${edu.description}</div>
                                     </c:if>
                                     <c:if test="${isSelf}">
-                                        <button class="action-btn text-danger" onclick="deleteEducation('${edu.id}')" style="position: absolute; top: 0; right: 0; padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        <div style="position: absolute; top: 0; right: 0; display: flex; gap: 0.5rem;">
+                                            <button class="action-btn text-muted edit-edu-btn" 
+                                                    data-id="${edu.id}"
+                                                    data-school="${fn:escapeXml(edu.school)}"
+                                                    data-degree="${fn:escapeXml(edu.degree)}"
+                                                    data-field="${fn:escapeXml(edu.fieldOfStudy)}"
+                                                    data-start="<fmt:formatDate value="${edu.startDate}" pattern="yyyy-MM-dd" />"
+                                                    data-end="<fmt:formatDate value="${edu.endDate}" pattern="yyyy-MM-dd" />"
+                                                    data-desc="${fn:escapeXml(edu.description)}"
+                                                    onclick="openEditEducationModal(this)" style="padding: 5px;" title="Edit"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn text-danger" onclick="deleteEducation('${edu.id}')" style="padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
                                     </c:if>
                                 </div>
                             </c:forEach>
@@ -798,38 +822,39 @@
     <div id="experienceModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
         <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0;">Add Experience</h3>
+                <h3 id="expModalTitle" style="margin:0;">Add Experience</h3>
                 <span class="close" onclick="closeAddExperienceModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
             </div>
-            <form onsubmit="submitExperience(event)">
+            <form id="experienceForm" onsubmit="submitExperience(event)">
+                <input type="hidden" name="id" id="expId">
                 <div class="mb-3">
                     <label class="form-label">Title</label>
-                    <input type="text" name="title" class="form-input" placeholder="e.g. Software Engineer" required>
+                    <input type="text" name="title" id="expTitle" class="form-input" placeholder="e.g. Software Engineer" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Company</label>
-                    <input type="text" name="company" class="form-input" placeholder="e.g. Google" required>
+                    <input type="text" name="company" id="expCompany" class="form-input" placeholder="e.g. Google" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Location</label>
-                    <input type="text" name="location" class="form-input" placeholder="e.g. Remote / New York">
+                    <input type="text" name="location" id="expLocation" class="form-input" placeholder="e.g. Remote / New York">
                 </div>
                 <div class="form-grid mb-3">
                     <div>
                         <label class="form-label">Start Date</label>
-                        <input type="date" name="startDate" class="form-input" required>
+                        <input type="date" name="startDate" id="expStartDate" class="form-input" required>
                     </div>
                     <div>
                         <label class="form-label">End Date</label>
                         <input type="date" name="endDate" class="form-input" id="exp-end-date">
                         <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; font-size:0.85rem;">
-                            <input type="checkbox" name="isCurrent" onchange="document.getElementById('exp-end-date').disabled = this.checked"> I currently work here
+                            <input type="checkbox" name="isCurrent" id="expIsCurrent" onchange="document.getElementById('exp-end-date').disabled = this.checked"> I currently work here
                         </label>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Description</label>
-                    <textarea name="description" class="form-input" style="min-height:100px;"></textarea>
+                    <textarea name="description" id="expDescription" class="form-input" style="min-height:100px;"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Experience</button>
             </form>
@@ -840,35 +865,36 @@
     <div id="educationModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
         <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0;">Add Education</h3>
+                <h3 id="eduModalTitle" style="margin:0;">Add Education</h3>
                 <span class="close" onclick="closeAddEducationModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
             </div>
-            <form onsubmit="submitEducation(event)">
+            <form id="educationForm" onsubmit="submitEducation(event)">
+                <input type="hidden" name="id" id="eduId">
                 <div class="mb-3">
                     <label class="form-label">School / University</label>
-                    <input type="text" name="school" class="form-input" placeholder="e.g. Harvard University" required>
+                    <input type="text" name="school" id="eduSchool" class="form-input" placeholder="e.g. Harvard University" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Degree</label>
-                    <input type="text" name="degree" class="form-input" placeholder="e.g. Bachelor's" required>
+                    <input type="text" name="degree" id="eduDegree" class="form-input" placeholder="e.g. Bachelor's" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Field of Study</label>
-                    <input type="text" name="fieldOfStudy" class="form-input" placeholder="e.g. Computer Science">
+                    <input type="text" name="fieldOfStudy" id="eduField" class="form-input" placeholder="e.g. Computer Science">
                 </div>
                 <div class="form-grid mb-3">
                     <div>
                         <label class="form-label">Start Date</label>
-                        <input type="date" name="startDate" class="form-input" required>
+                        <input type="date" name="startDate" id="eduStartDate" class="form-input" required>
                     </div>
                     <div>
                         <label class="form-label">End Date (or expected)</label>
-                        <input type="date" name="endDate" class="form-input">
+                        <input type="date" name="endDate" id="eduEndDate" class="form-input">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Description</label>
-                    <textarea name="description" class="form-input" style="min-height:100px;"></textarea>
+                    <textarea name="description" id="eduDescription" class="form-input" style="min-height:100px;"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Education</button>
             </form>
@@ -1006,16 +1032,55 @@
         }
 
         // Professional Timeline JS
-        function openAddExperienceModal() { document.getElementById('experienceModal').style.display = 'flex'; }
+        function openAddExperienceModal() {
+            document.getElementById('experienceForm').reset();
+            document.getElementById('expId').value = '';
+            document.getElementById('expModalTitle').innerText = 'Add Experience';
+            document.getElementById('experienceModal').style.display = 'flex';
+        }
+        function openEditExperienceModal(btn) {
+            const d = btn.dataset;
+            document.getElementById('expId').value = d.id;
+            document.getElementById('expCompany').value = d.company;
+            document.getElementById('expTitle').value = d.title;
+            document.getElementById('expLocation').value = d.location;
+            document.getElementById('expStartDate').value = d.start;
+            document.getElementById('exp-end-date').value = d.end || '';
+            const isCurrent = d.current === 'true';
+            document.getElementById('expIsCurrent').checked = isCurrent;
+            document.getElementById('exp-end-date').disabled = isCurrent;
+            document.getElementById('expDescription').value = d.desc;
+            document.getElementById('expModalTitle').innerText = 'Edit Experience';
+            document.getElementById('experienceModal').style.display = 'flex';
+        }
         function closeAddExperienceModal() { document.getElementById('experienceModal').style.display = 'none'; }
-        function openAddEducationModal() { document.getElementById('educationModal').style.display = 'flex'; }
+        
+        function openAddEducationModal() {
+            document.getElementById('educationForm').reset();
+            document.getElementById('eduId').value = '';
+            document.getElementById('eduModalTitle').innerText = 'Add Education';
+            document.getElementById('educationModal').style.display = 'flex';
+        }
+        function openEditEducationModal(btn) {
+            const d = btn.dataset;
+            document.getElementById('eduId').value = d.id;
+            document.getElementById('eduSchool').value = d.school;
+            document.getElementById('eduDegree').value = d.degree;
+            document.getElementById('eduField').value = d.field;
+            document.getElementById('eduStartDate').value = d.start;
+            document.getElementById('eduEndDate').value = d.end || '';
+            document.getElementById('eduDescription').value = d.desc;
+            document.getElementById('eduModalTitle').innerText = 'Edit Education';
+            document.getElementById('educationModal').style.display = 'flex';
+        }
         function closeAddEducationModal() { document.getElementById('educationModal').style.display = 'none'; }
 
         function submitExperience(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const params = new URLSearchParams();
-            params.append('action', 'addExperience');
+            const expId = document.getElementById('expId').value;
+            params.append('action', expId ? 'updateExperience' : 'addExperience');
             formData.forEach((value, key) => params.append(key, value));
 
             fetch(contextPath + '/ProfessionalProfileServlet', {
@@ -1024,7 +1089,7 @@
                 body: params.toString()
             }).then(res => res.text()).then(data => {
                 if(data === 'success') location.reload();
-                else alert("Failed to add experience: " + data);
+                else alert("Failed to save experience: " + data);
             });
         }
 
@@ -1044,7 +1109,8 @@
             e.preventDefault();
             const formData = new FormData(e.target);
             const params = new URLSearchParams();
-            params.append('action', 'addEducation');
+            const eduId = document.getElementById('eduId').value;
+            params.append('action', eduId ? 'updateEducation' : 'addEducation');
             formData.forEach((value, key) => params.append(key, value));
 
             fetch(contextPath + '/ProfessionalProfileServlet', {
@@ -1053,7 +1119,7 @@
                 body: params.toString()
             }).then(res => res.text()).then(data => {
                 if(data === 'success') location.reload();
-                else alert("Failed to add education.");
+                else alert("Failed to save education.");
             });
         }
 

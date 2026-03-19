@@ -56,6 +56,29 @@ public class EducationDAO {
         return educationList;
     }
 
+    public boolean updateEducation(Education edu) {
+        String query = "UPDATE Education SET school=?, degree=?, field_of_study=?, start_date=?, end_date=?, description=? WHERE id=? AND user_id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, edu.getSchool());
+            stmt.setString(2, edu.getDegree());
+            stmt.setString(3, edu.getFieldOfStudy());
+            stmt.setDate(4, new java.sql.Date(edu.getStartDate().getTime()));
+            if (edu.getEndDate() != null) {
+                stmt.setDate(5, new java.sql.Date(edu.getEndDate().getTime()));
+            } else {
+                stmt.setNull(5, Types.DATE);
+            }
+            stmt.setString(6, edu.getDescription());
+            stmt.setInt(7, edu.getId());
+            stmt.setInt(8, edu.getUserId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean deleteEducation(int id, int userId) {
         String query = "DELETE FROM Education WHERE id = ? AND user_id = ?";
         try (Connection conn = DBConnection.getConnection();

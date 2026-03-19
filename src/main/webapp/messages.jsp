@@ -322,7 +322,11 @@
                 height: calc(100vh - 60px);
                 max-width: 100vw;
                 overflow: hidden;
-                position: relative;
+                position: fixed; /* Fix for mobile layout shifting */
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
             }
             .chat-sidebar {
                 position: absolute;
@@ -339,12 +343,23 @@
                 -webkit-overflow-scrolling: touch;
             }
             .friend-item {
-                padding: 0.75rem 1rem !important;
-                gap: 0.75rem !important;
+                padding: 0.85rem 1rem !important;
+                gap: 0.85rem !important;
+                background: var(--bg-white) !important;
+                border-bottom: 1px solid var(--border-color) !important;
+                opacity: 1 !important;
+                display: flex !important;
+                align-items: center !important;
             }
             .friend-item img {
-                width: 42px !important;
-                height: 42px !important;
+                width: 44px !important;
+                height: 44px !important;
+                flex-shrink: 0 !important;
+            }
+            .friend-name {
+                font-size: 1rem !important;
+                color: var(--text-main) !important;
+                opacity: 1 !important;
             }
             .chat-main {
                 position: absolute;
@@ -402,7 +417,11 @@
 </head>
 <body style="background-color: var(--bg-light); margin: 0; height: 100vh; overflow: hidden;">
     <jsp:include page="components/navbar.jsp" />
-    <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>
+    <script>
+        window.contextPath = '${pageContext.request.contextPath}';
+        window.currentUserId = '${sessionScope.user.userId}';
+    </script>
+    <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260319"></script>
 
     <div class="chat-layout">
         <!-- Sidebar: Friend List -->
@@ -436,7 +455,7 @@
                 <a href="MessageServlet?with=${friend.userId}" class="friend-item ${friend.userId == chatUser.userId ? 'active' : ''}">
                     <img src="${friend.profilePhoto != null && friend.profilePhoto.startsWith('http') ? friend.profilePhoto : pageContext.request.contextPath.concat('/').concat(friend.profilePhoto != null ? friend.profilePhoto : 'images/default-avatar.png')}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: ${friend.unreadCount > 0 ? '700' : '600'}; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">${friend.name}</div>
+                        <div class="friend-name" style="font-weight: ${friend.unreadCount > 0 ? '700' : '600'}; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">${friend.name}</div>
                         <c:if test="${friend.unreadCount > 0}">
                             <div style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-top: 1px;">
                                 <c:choose>

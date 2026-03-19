@@ -58,6 +58,30 @@ public class ExperienceDAO {
         return experiences;
     }
 
+    public boolean updateExperience(Experience exp) {
+        String query = "UPDATE Experience SET company=?, title=?, location=?, start_date=?, end_date=?, description=?, is_current=? WHERE id=? AND user_id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, exp.getCompany());
+            stmt.setString(2, exp.getTitle());
+            stmt.setString(3, exp.getLocation());
+            stmt.setDate(4, new java.sql.Date(exp.getStartDate().getTime()));
+            if (exp.getEndDate() != null) {
+                stmt.setDate(5, new java.sql.Date(exp.getEndDate().getTime()));
+            } else {
+                stmt.setNull(5, Types.DATE);
+            }
+            stmt.setString(6, exp.getDescription());
+            stmt.setBoolean(7, exp.isCurrent());
+            stmt.setInt(8, exp.getId());
+            stmt.setInt(9, exp.getUserId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean deleteExperience(int id, int userId) {
         String query = "DELETE FROM Experience WHERE id = ? AND user_id = ?";
         try (Connection conn = DBConnection.getConnection();

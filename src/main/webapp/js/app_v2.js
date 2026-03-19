@@ -183,15 +183,32 @@ function sendPostShareToSelected(btn) {
 }
 
 function renderRichPostPreview(container, postId) {
-    if (!container || !postId) return;
+    if (!container || !postId) {
+        console.warn('renderRichPostPreview: Missing container or postId', { container, postId });
+        return;
+    }
+    
+    console.log('Attempting to render rich post preview for ID:', postId);
     
     fetch((window.contextPath || '') + '/InteractionServlet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=getPostDetail&postId=' + postId
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error('HTTP status ' + res.status);
+        return res.text().then(text => {
+            if (!text || text.trim() === '') throw new Error('Empty response from server');
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error. Raw text:', text);
+                throw e;
+            }
+        });
+    })
     .then(post => {
+        console.log('Successfully fetched post detail for preview:', post);
         const authorPhoto = getImageUrl(post.userPhoto || 'images/default-avatar.png');
         const postImg = (post.images && post.images.length > 0) ? getImageUrl(post.images[0]) : getImageUrl('images/placeholder.png');
         const contentSnippet = post.postContent ? (post.postContent.length > 60 ? post.postContent.substring(0, 57) + '...' : post.postContent) : '';
@@ -221,8 +238,8 @@ function renderRichPostPreview(container, postId) {
         }
     })
     .catch(err => {
-        console.error('Error loading rich post preview:', err);
-        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;"><i class="fas fa-exclamation-circle"></i> Post not available</div>';
+        console.error('Error loading rich post preview for ID ' + postId + ':', err);
+        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border: 1px dashed var(--border-color); border-radius:12px;"><i class="fas fa-exclamation-circle text-warning"></i> Post not available</div>';
     });
 }
 
