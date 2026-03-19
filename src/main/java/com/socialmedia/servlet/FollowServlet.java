@@ -60,7 +60,7 @@ public class FollowServlet extends HttpServlet {
                 // If it's a private account and we're not already following, send a request
                 String status = friendDAO.getFriendshipStatus(currentUser.getUserId(), targetUserId); // Changed to use instance variable
                 if ("NONE".equals(status)) {
-                    friendDAO.sendFriendRequest(currentUser.getUserId(), targetUserId); // Changed to use instance variable
+                    friendDAO.sendFriendRequest(currentUser.getUserId(), targetUserId, null); // Changed to use instance variable
                 } else if ("REQUEST_SENT".equals(status)) {
                     // If already sent, maybe cancel it? (Optional)
                     friendDAO.deleteFriendRequest(currentUser.getUserId(), targetUserId); // Changed to use instance variable

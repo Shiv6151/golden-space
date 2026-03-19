@@ -69,12 +69,26 @@
                 <img src="${profileUser.profilePhoto != null && (profileUser.profilePhoto.startsWith('http') || profileUser.profilePhoto.startsWith('data:')) ? profileUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(profileUser.profilePhoto != null ? profileUser.profilePhoto : 'images/default-avatar.png')}" 
                      class="ig-avatar clickable" alt="${profileUser.name}"
                      onclick="showProfilePhoto(this.src)">
-                <h2 class="ig-username" style="margin-top: 1rem;">${profileUser.username}</h2>
+                <h2 class="ig-username" style="margin-top: 1rem;">
+                    ${profileUser.username}
+                    <c:if test="${not isSelf && connectionDegree != null}">
+                        <span class="connection-degree" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-left: 0.25rem;">
+                            • ${connectionDegree == 1 ? '1st' : (connectionDegree == 2 ? '2nd' : '3rd')}
+                        </span>
+                    </c:if>
+                </h2>
             </div>
             
             <div class="ig-info-section">
                 <div class="ig-bio-section" style="margin-bottom: 1.5rem;">
-                    <div class="ig-full-name" style="font-size: 1.5rem; margin-bottom: 0.25rem;">${profileUser.name}</div>
+                    <div class="ig-full-name" style="font-size: 1.5rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                        ${profileUser.name}
+                    </div>
+                    <c:if test="${not empty profileUser.headline}">
+                        <div class="profile-headline" style="font-weight: 500; color: var(--text-main); margin-bottom: 0.5rem; font-size: 1.1rem;">
+                            ${profileUser.headline}
+                        </div>
+                    </c:if>
                     <div class="ig-bio-text">${profileUser.bio != null ? profileUser.bio : "No bio available."}</div>
                     <div class="ig-joined-date" style="margin-top: 0.5rem;"><i class="far fa-calendar-alt"></i> Joined <fmt:formatDate value="${profileUser.createdAt}" pattern="MMMM yyyy" /></div>
                 </div>
@@ -112,7 +126,7 @@
                                         <button class="btn btn-outline btn-sm" id="follow-action-btn" onclick="cancelFollowRequest('${profileUser.userId}', this)" style="background:var(--bg-light); color:var(--text-muted);">Requested</button>
                                     </c:when>
                                     <c:otherwise>
-                                        <button class="btn btn-primary btn-sm" id="follow-action-btn" onclick="sendFollowRequest('${profileUser.userId}', this, ${profileUser.privateAccount == true ? 'true' : 'false'})">Follow</button>
+                                        <button class="btn btn-primary btn-sm" id="follow-action-btn" onclick="openConnectModal()">Connect</button>
                                     </c:otherwise>
                                 </c:choose>
                                 <c:if test="${isMutualFollowing}">
@@ -125,26 +139,203 @@
             </div>
         </div>
 
-        <!-- Followers / Following List Modal -->
-        <div id="followListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-            <div class="card" style="width:100%; max-width:400px; max-height:70vh; display:flex; flex-direction:column; border-radius:12px; overflow:hidden; padding:0;">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border-color); font-weight:700; font-size:1rem;">
-                    <span id="followListTitle">Followers</span>
-                    <button onclick="closeFollowListModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
-                </div>
-                <!-- Search Bar for Follow List -->
-                <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-light);">
-                    <div style="position:relative;">
-                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.8rem;"></i>
-                        <input type="text" id="follow-list-search" placeholder="Search..." oninput="filterFollowList()" style="width:100%; padding:0.45rem 0.8rem 0.45rem 2.2rem; border:1px solid var(--border-color); border-radius:30px; font-size:0.85rem; background:var(--bg-white); font-family:inherit; outline:none; transition: all 0.2s; border:1px solid var(--border-color);" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='var(--border-color)'">
+        <c:if test="${isSelf}">
+            <!-- Professional Dashboard / Analytics -->
+            <div class="main-container" style="max-width: 935px; margin-top: 1rem; padding: 0 1rem;">
+                <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--primary-light, #fdf2f8) 0%, #ffffff 100%); border: 1px solid var(--primary-color); border-opacity: 0.2;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h3 style="margin: 0; color: var(--primary-dark); font-size: 1.25rem;">Analytics Dashboard</h3>
+                            <p class="text-muted" style="margin: 0.25rem 0 1rem; font-size: 0.9rem;">Private to you</p>
+                            
+                            <div style="display: flex; gap: 2rem;">
+                                <div style="cursor: pointer;" onclick="openViewersModal()">
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">${profileViewCount != null ? profileViewCount : 0}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted);">Profile views</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">${postCount != null ? postCount : 0}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted);">Post impressions</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline btn-sm" onclick="openViewersModal()">See who viewed</button>
                     </div>
                 </div>
-                <div id="followListBody" style="overflow-y:auto; padding:0.5rem 0; flex: 1; max-height: 50vh;">
-                    <div style="padding:2rem; text-align:center; color:var(--text-muted);">Loading...</div>
+            </div>
+
+            <!-- Viewers Modal -->
+            <div id="viewersModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+                <div class="modal-content card" style="max-width:450px; width:95%; padding:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 style="margin:0;">Recent Visitors</h3>
+                        <span class="close" onclick="closeViewersModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+                    </div>
+                    <div style="max-height:400px; overflow-y:auto;">
+                        <c:choose>
+                            <c:when test="${not empty recentProfileViews}">
+                                <c:forEach var="view" items="${recentProfileViews}">
+                                    <a href="ProfileServlet?id=${view.viewerId}" style="display:flex; gap:1rem; padding:0.75rem; text-decoration:none; color:inherit; border-bottom:1px solid var(--border-color); align-items:center;">
+                                        <img src="${view.viewerPhoto}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                                        <div>
+                                            <div style="font-weight:600;">${view.viewerName}</div>
+                                            <div style="font-size:0.75rem; color:var(--text-muted);">${view.viewerHeadline}</div>
+                                            <div style="font-size:0.7rem; color:var(--text-muted);"><fmt:formatDate value="${view.viewTime}" pattern="MMM d, h:mm a" /></div>
+                                        </div>
+                                    </a>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <p class="text-muted text-center" style="padding:2rem;">No recent visitors to show.</p>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+        </c:if>
+
+        <!-- Professional Sections -->
+        <div class="main-container" style="max-width: 935px; margin-top: 1rem; padding: 0 1rem;">
+            <!-- About Section -->
+            <c:if test="${not empty profileUser.professionalSummary}">
+                <div class="card" style="margin-bottom: 1rem; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">About</h3>
+                    <div style="line-height: 1.6; color: var(--text-main); white-space: pre-wrap;">${profileUser.professionalSummary}</div>
+                </div>
+            </c:if>
+
+            <!-- Experience Section -->
+            <div class="card" style="margin-bottom: 1rem; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0;">Experience</h3>
+                    <c:if test="${isSelf}">
+                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()"><i class="fas fa-plus"></i> Add</button>
+                    </c:if>
+                </div>
+                <div id="experience-list">
+                    <c:choose>
+                        <c:when test="${not empty experiences}">
+                            <c:forEach var="exp" items="${experiences}">
+                                <div class="timeline-item" style="margin-bottom: 1.5rem; position: relative;">
+                                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">${exp.title}</div>
+                                    <div style="font-weight: 500; font-size: 1rem;">${exp.company} • ${exp.location}</div>
+                                    <div style="color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0;">
+                                        <fmt:formatDate value="${exp.startDate}" pattern="MMM yyyy" /> - 
+                                        <c:choose>
+                                            <c:when test="${exp.current}">Present</c:when>
+                                            <c:otherwise><fmt:formatDate value="${exp.endDate}" pattern="MMM yyyy" /></c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <div style="margin-top: 0.5rem; line-height: 1.5;">${exp.description}</div>
+                                    <c:if test="${isSelf}">
+                                        <button class="action-btn text-danger" onclick="deleteExperience('${exp.id}')" style="position: absolute; top: 0; right: 0; padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                    </c:if>
+                                </div>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="text-muted">No experience history shared.</p>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+
+            <!-- Education Section -->
+            <div class="card" style="margin-bottom: 1rem; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0;">Education</h3>
+                    <c:if test="${isSelf}">
+                        <button class="btn btn-outline btn-sm" onclick="openEducationModal()"><i class="fas fa-plus"></i> Add Education</button>
+                    </c:if>
+                </div>
+                <div id="education-list">
+                    <c:choose>
+                        <c:when test="${not empty educationList}">
+                            <c:forEach var="edu" items="${educationList}">
+                                <div class="timeline-item" style="position: relative; padding-bottom: 1.5rem;">
+                                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">${edu.school}</div>
+                                    <div style="font-weight: 500; font-size: 1rem;">${edu.degree}, ${edu.fieldOfStudy}</div>
+                                    <div style="color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0;">
+                                        <fmt:formatDate value="${edu.startDate}" pattern="yyyy" /> - 
+                                        <c:choose>
+                                            <c:when test="${not empty edu.endDate}"><fmt:formatDate value="${edu.endDate}" pattern="yyyy" /></c:when>
+                                            <c:otherwise>Present</c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <c:if test="${not empty edu.description}">
+                                        <div style="margin-top: 0.5rem; line-height: 1.5;">${edu.description}</div>
+                                    </c:if>
+                                    <c:if test="${isSelf}">
+                                        <button class="action-btn text-danger" onclick="deleteEducation('${edu.id}')" style="position: absolute; top: 0; right: 0; padding: 5px;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                    </c:if>
+                                </div>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="text-muted">No education history shared.</p>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- Recommendations Section -->
+            <div class="card" style="margin-bottom: 1rem; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0;">Recommendations</h3>
+                    <c:if test="${not isSelf}">
+                        <button class="btn btn-outline btn-sm" onclick="openWriteRecommendationModal()"><i class="fas fa-edit"></i> Write a Recommendation</button>
+                    </c:if>
+                </div>
+
+                <!-- Pending Recommendations (Only for Owner) -->
+                <c:if test="${isSelf && not empty pendingRecommendations}">
+                    <div style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-clock text-warning"></i> Pending Approval</h4>
+                        <c:forEach var="prec" items="${pendingRecommendations}">
+                            <div class="pending-rec-item" style="border-bottom: 1px solid var(--border-color); padding: 1rem 0;">
+                                <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <img src="${prec.senderPhoto}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    <div>
+                                        <div style="font-weight: 700;">${prec.senderName}</div>
+                                        <div style="font-size: 0.8rem; color: var(--text-muted);">${prec.senderHeadline}</div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 1rem; line-height: 1.5; font-style: italic; color: var(--text-main);">"${prec.text}"</div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-primary btn-sm" onclick="acceptRecommendation('${prec.id}')">Accept</button>
+                                    <button class="btn btn-outline btn-sm text-danger" onclick="rejectRecommendation('${prec.id}')">Ignore</button>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </c:if>
+
+                <div id="recommendations-list">
+                    <c:choose>
+                        <c:when test="${not empty recommendations}">
+                            <c:forEach var="rec" items="${recommendations}">
+                                <div class="recommendation-item" style="margin-bottom: 1.5rem; position: relative; border-bottom: 1px solid var(--bg-light); padding-bottom: 1rem;">
+                                    <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem;">
+                                        <img src="${rec.senderPhoto}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 1rem; color: var(--text-main);">${rec.senderName}</div>
+                                            <div style="font-size: 0.85rem; color: var(--text-muted);">${rec.senderHeadline}</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted);"><fmt:formatDate value="${rec.createdAt}" pattern="MMM d, yyyy" /></div>
+                                        </div>
+                                    </div>
+                                    <div style="line-height: 1.6; color: var(--text-main); font-style: italic;">"${rec.text}"</div>
+                                </div>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="text-muted">No recommendations received yet.</p>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
         </div>
-        <!-- End Follow List Modal -->
 
         <div class="ig-tabs">
             <div class="ig-tab active">
@@ -329,6 +520,25 @@
                     </label>
                     <input class="form-input" type="text" name="name" value="${profileUser.name}"
                            style="border-radius:10px; padding:0.65rem 0.9rem; font-size:0.95rem;" placeholder="Your full name" required>
+                </div>
+
+                <!-- Headline -->
+                <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fas fa-briefcase" style="color:var(--primary-color); font-size:0.75rem;"></i> Professional Headline
+                    </label>
+                    <input class="form-input" type="text" name="headline" value="${profileUser.headline}"
+                           style="border-radius:10px; padding:0.65rem 0.9rem; font-size:0.95rem;" placeholder="e.g. Software Engineer at Google">
+                </div>
+
+                <!-- Summary -->
+                <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fas fa-id-card" style="color:var(--primary-color); font-size:0.75rem;"></i> Professional Summary
+                    </label>
+                    <textarea class="form-input" name="summary" rows="4"
+                              style="border-radius:10px; padding:0.65rem 0.9rem; font-size:0.95rem; resize:vertical; font-family:inherit;"
+                              placeholder="Describe your professional background...">${profileUser.professionalSummary}</textarea>
                 </div>
 
                 <!-- Bio -->
@@ -523,12 +733,210 @@
                 container.innerHTML = '<div class="text-danger text-center" style="padding:2rem;">Failed to load users.</div>';
             });
         }
-        
-        function closeFollowModal() {
-            document.getElementById('followModal').style.display = 'none';
+    </script>
+
+    <!-- Experience Modal -->
+    <div id="experienceModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Add Experience</h3>
+                <span class="close" onclick="closeAddExperienceModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <form onsubmit="submitExperience(event)">
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-input" placeholder="e.g. Software Engineer" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Company</label>
+                    <input type="text" name="company" class="form-input" placeholder="e.g. Google" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-input" placeholder="e.g. Remote / New York">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;" class="mb-3">
+                    <div>
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="endDate" class="form-input" id="exp-end-date">
+                        <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; font-size:0.85rem;">
+                            <input type="checkbox" name="isCurrent" onchange="document.getElementById('exp-end-date').disabled = this.checked"> I currently work here
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-input" style="min-height:100px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Save Experience</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Education Modal -->
+    <div id="educationModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Add Education</h3>
+                <span class="close" onclick="closeAddEducationModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <form onsubmit="submitEducation(event)">
+                <div class="mb-3">
+                    <label class="form-label">School / University</label>
+                    <input type="text" name="school" class="form-input" placeholder="e.g. Harvard University" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Degree</label>
+                    <input type="text" name="degree" class="form-input" placeholder="e.g. Bachelor's" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Field of Study</label>
+                    <input type="text" name="fieldOfStudy" class="form-input" placeholder="e.g. Computer Science">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;" class="mb-3">
+                    <div>
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">End Date (or expected)</label>
+                        <input type="date" name="endDate" class="form-input">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-input" style="min-height:100px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Save Education</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Photo View Modal -->
+    <div id="profilePhotoModal" class="modal" onclick="closeProfilePhoto()" style="display: none; background: rgba(0,0,0,0.9); z-index: 2000;">
+        <span class="close" onclick="closeProfilePhoto()" style="color: white; top: 20px; right: 30px; font-size: 40px;">&times;</span>
+        <div class="modal-content" style="background: none; border: none; box-shadow: none; display: flex; justify-content: center; align-items: center; max-width: 90vw; max-height: 90vh;">
+            <img id="fullProfilePhoto" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- Add Skill Modal -->
+    <div id="addSkillModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+        <div class="modal-content card" style="max-width:450px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Add professional skill</h3>
+                <span class="close" onclick="closeAddSkillModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div class="mb-3">
+                <input type="text" id="skillSearchInput" class="form-input" placeholder="Search for a skill (e.g. Java, Leadership)" oninput="handleSkillSearch(this.value)">
+            </div>
+            <div id="skillSearchResults" style="max-height:300px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                <!-- Search results will appear here -->
+            </div>
+            <div style="margin-top:1rem;" class="text-muted small">
+                Choose from our professional library to help others endorse your expertise.
+            </div>
+        </div>
+    </div>
+
+    <!-- Write Recommendation Modal -->
+    <div id="writeRecommendationModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+        <div class="modal-content card" style="max-width:550px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Write a recommendation</h3>
+                <span class="close" onclick="closeWriteRecommendationModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div style="display:flex; gap:1rem; margin-bottom:1.5rem; background:var(--bg-light); padding:1rem; border-radius:8px;">
+                <img src="${profileUser.profilePhoto}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+                <div>
+                    <div style="font-weight:700;">${profileUser.name}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${profileUser.headline}</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Your Recommendation</label>
+                <textarea id="recommendationText" class="form-input" style="min-height:150px;" placeholder="Write a few sentences about your professional experience with ${profileUser.name}..."></textarea>
+            </div>
+            <div style="display:flex; gap:1rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="submitRecommendation()">Submit for Approval</button>
+                <button class="btn btn-outline" onclick="closeWriteRecommendationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect with Message Modal -->
+    <div id="connectModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:5001;">
+        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">Connect with ${profileUser.name}</h3>
+                <span class="close" onclick="closeConnectModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <p class="text-muted" style="margin-bottom:1rem;">Include a personalized note to introduce yourself and explain why you'd like to connect.</p>
+            <div class="mb-3">
+                <textarea id="connectNote" class="form-input" style="min-height:120px;" placeholder="Ex: Hi ${profileUser.name}, I'm interested in your work at ${not empty experiences ? experiences[0].company : 'your firm'} and would love to connect."></textarea>
+            </div>
+            <div style="display:flex; gap:1rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="submitConnectRequest()">Send with Note</button>
+                <button class="btn btn-outline" style="flex:1;" onclick="submitConnectRequest(true)">Send without Note</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.contextPath = '${pageContext.request.contextPath}';
+        window.loggedInUserId = '${sessionScope.user.userId}';
+        window.currentProfileUserId = '${profileUser.userId}';
+
+        function toggleEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
         }
 
-                function previewAvatar(input) {
+        // Connect JS
+        function openConnectModal() {
+            document.getElementById('connectModal').style.display = 'flex';
+        }
+        function closeConnectModal() {
+            document.getElementById('connectModal').style.display = 'none';
+        }
+
+        // Viewers Modal JS
+        function openViewersModal() {
+            const modal = document.getElementById('viewersModal');
+            if(modal) modal.style.display = 'flex';
+        }
+        function closeViewersModal() {
+            const modal = document.getElementById('viewersModal');
+            if(modal) modal.style.display = 'none';
+        }
+        function submitConnectRequest(withoutNote = false) {
+            const note = withoutNote ? '' : document.getElementById('connectNote').value;
+            const btn = document.getElementById('follow-action-btn');
+            
+            fetch(contextPath + '/FriendServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=send&friendId=' + currentProfileUserId + '&message=' + encodeURIComponent(note)
+            }).then(res => {
+                if(res.ok) {
+                    btn.innerText = 'Requested';
+                    btn.classList.replace('btn-primary', 'btn-outline');
+                    btn.style.color = 'var(--text-muted)';
+                    btn.onclick = () => cancelFollowRequest(currentProfileUserId, btn);
+                    closeConnectModal();
+                } else alert("Failed to send request.");
+            });
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function previewAvatar(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = e => {
@@ -537,14 +945,69 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
-function toggleEditModal() {
-            const modal = document.getElementById('editProfileModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+
+        // Professional Timeline JS
+        function openAddExperienceModal() { document.getElementById('experienceModal').style.display = 'flex'; }
+        function closeAddExperienceModal() { document.getElementById('experienceModal').style.display = 'none'; }
+        function openAddEducationModal() { document.getElementById('educationModal').style.display = 'flex'; }
+        function closeAddEducationModal() { document.getElementById('educationModal').style.display = 'none'; }
+
+        function submitExperience(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams();
+            params.append('action', 'addExperience');
+            formData.forEach((value, key) => params.append(key, value));
+
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to add experience: " + data);
+            });
         }
 
-        function toggleSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        function deleteExperience(id) {
+            if(!confirm("Are you sure you want to delete this experience?")) return;
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=deleteExperience&id=' + id
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to delete experience.");
+            });
+        }
+
+        function submitEducation(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams();
+            params.append('action', 'addEducation');
+            formData.forEach((value, key) => params.append(key, value));
+
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to add education.");
+            });
+        }
+
+        function deleteEducation(id) {
+            if(!confirm("Are you sure you want to delete this education?")) return;
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=deleteEducation&id=' + id
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to delete education.");
+            });
         }
 
         function updatePrivacy(isPrivate) {
@@ -587,126 +1050,140 @@ function toggleEditModal() {
                 }
             });
         }
-    </script>
 
-    <!-- Profile Photo View Modal -->
-    <div id="profilePhotoModal" class="modal" onclick="closeProfilePhoto()" style="display: none; background: rgba(0,0,0,0.9); z-index: 2000;">
-        <span class="close" onclick="closeProfilePhoto()" style="color: white; top: 20px; right: 30px; font-size: 40px;">&times;</span>
-        <div class="modal-content" style="background: none; border: none; box-shadow: none; display: flex; justify-content: center; align-items: center; max-width: 90vw; max-height: 90vh;">
-            <img id="fullProfilePhoto" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain;">
-        </div>
-    </div>
-
-    <!-- Cropping Modal (Shared) -->
-    <div id="cropModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:5000;">
-        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0;">Adjust Image</h3>
-                <span class="close" onclick="closeCropModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
-            </div>
-            
-            <div id="cropContainer" style="width:100%; background:#000; overflow:hidden; border-radius:8px; position:relative; cursor:move; user-select:none;">
-                <img id="cropImg" src="" style="position:absolute; top:0; left:0; pointer-events:none;">
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events:none; border: 2px solid var(--primary-color);"></div>
-            </div>
-
-            <div style="margin-top:1.5rem; text-align:center;">
-                <div style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem;">
-                    <i class="fas fa-search-minus text-muted"></i>
-                    <input type="range" id="zoomSlider" min="1" max="3" step="0.01" value="1" style="flex:1;">
-                    <i class="fas fa-search-plus text-muted"></i>
-                </div>
-                <small class="text-muted d-block mb-3">Drag the image to position it</small>
-function toggleEditModal() {
-            const modal = document.getElementById('editProfileModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        function showProfilePhoto(src) {
+            document.getElementById('fullProfilePhoto').src = src;
+            document.getElementById('profilePhotoModal').style.display = 'flex';
         }
 
-        function toggleSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        function closeProfilePhoto() {
+            document.getElementById('profilePhotoModal').style.display = 'none';
         }
 
-        function updatePrivacy(isPrivate) {
-            const statusText = document.getElementById('privacyStatus');
-            fetch(contextPath + '/SettingsServlet', {
+        // Skills JS
+        function openAddSkillModal() {
+            document.getElementById('addSkillModal').style.display = 'flex';
+        }
+        function closeAddSkillModal() {
+            document.getElementById('addSkillModal').style.display = 'none';
+            document.getElementById('skillSearchInput').value = '';
+            document.getElementById('skillSearchResults').innerHTML = '';
+        }
+
+        let skillSearchTimeout;
+        function handleSkillSearch(query) {
+            clearTimeout(skillSearchTimeout);
+            if(query.length < 2) {
+                document.getElementById('skillSearchResults').innerHTML = '';
+                return;
+            }
+            skillSearchTimeout = setTimeout(() => {
+                fetch(contextPath + '/ProfessionalProfileServlet?action=searchSkills&query=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(skills => {
+                        const results = document.getElementById('skillSearchResults');
+                        results.innerHTML = '';
+                        skills.forEach(s => {
+                            const div = document.createElement('div');
+                            div.className = 'search-result-item';
+                            div.style = 'padding:0.75rem; cursor:pointer; border-bottom:1px solid var(--border-color);';
+                            div.innerHTML = '<strong>' + s.name + '</strong>';
+                            div.onclick = () => addSkill(s.id);
+                            results.appendChild(div);
+                        });
+                        if(skills.length === 0) {
+                            results.innerHTML = '<div style="padding:0.75rem;" class="text-muted">No matching skills found.</div>';
+                        }
+                    });
+            }, 300);
+        }
+
+        function addSkill(skillId) {
+            fetch(contextPath + '/ProfessionalProfileServlet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=privacy&isPrivate=' + isPrivate
+                body: 'action=addSkill&skillId=' + skillId
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to add skill. Maybe you already added it?");
+            });
+        }
+
+        function removeSkill(skillId) {
+            if(!confirm("Are you sure you want to remove this skill?")) return;
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=removeSkill&skillId=' + skillId
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to remove skill.");
+            });
+        }
+
+        function toggleEndorsement(userSkillId, btn) {
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=toggleEndorsement&userSkillId=' + userSkillId
             }).then(res => res.text()).then(data => {
                 if(data === 'success') {
-                    statusText.innerText = isPrivate ? "Private Account" : "Public Account";
+                    const countSpan = btn.nextElementSibling;
+                    let count = parseInt(countSpan.innerText);
+                    if(btn.classList.contains('active')) {
+                        btn.classList.remove('active');
+                        btn.style.color = 'var(--text-muted)';
+                        countSpan.innerText = count - 1;
+                    } else {
+                        btn.classList.add('active');
+                        btn.style.color = 'var(--primary-color)';
+                        countSpan.innerText = count + 1;
+                    }
                 } else {
-                    alert("Failed to update privacy.");
-                    document.getElementById('privacyToggle').checked = !isPrivate;
+                    alert("Failed to update endorsement.");
                 }
             });
         }
 
-        function updatePassword(e) {
-            e.preventDefault();
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const msgDiv = document.getElementById('passwordMessage');
-            
-            msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-            msgDiv.className = 'text-muted';
-
-            fetch(contextPath + '/SettingsServlet', {
+        // Recommendations JS
+        function openWriteRecommendationModal() {
+            document.getElementById('writeRecommendationModal').style.display = 'flex';
+        }
+        function closeWriteRecommendationModal() {
+            document.getElementById('writeRecommendationModal').style.display = 'none';
+        }
+        function submitRecommendation() {
+            const text = document.getElementById('recommendationText').value;
+            if(!text.trim()) return;
+            fetch(contextPath + '/ProfessionalProfileServlet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=password&currentPassword=' + encodeURIComponent(currentPassword) + '&newPassword=' + encodeURIComponent(newPassword)
+                body: 'action=submitRecommendation&receiverId=' + currentProfileUserId + '&text=' + encodeURIComponent(text)
             }).then(res => res.text()).then(data => {
                 if(data === 'success') {
-                    msgDiv.innerText = 'Password updated successfully!';
-                    msgDiv.className = 'text-success';
-                    document.getElementById('passwordForm').reset();
-                } else {
-                    msgDiv.innerText = data;
-                    msgDiv.className = 'text-danger';
-                }
+                    alert("Recommendation submitted for approval!");
+                    closeWriteRecommendationModal();
+                } else alert("Failed to submit recommendation.");
             });
         }
-    </script>
-
-    <!-- Profile Photo View Modal -->
-    <div id="profilePhotoModal" class="modal" onclick="closeProfilePhoto()" style="display: none; background: rgba(0,0,0,0.9); z-index: 2000;">
-        <span class="close" onclick="closeProfilePhoto()" style="color: white; top: 20px; right: 30px; font-size: 40px;">&times;</span>
-        <div class="modal-content" style="background: none; border: none; box-shadow: none; display: flex; justify-content: center; align-items: center; max-width: 90vw; max-height: 90vh;">
-            <img id="fullProfilePhoto" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain;">
-        </div>
-    </div>
-
-    <!-- Cropping Modal (Shared) -->
-    <div id="cropModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:5000;">
-        <div class="modal-content card" style="max-width:500px; width:95%; padding:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0;">Adjust Image</h3>
-                <span class="close" onclick="closeCropModal()" style="font-size:1.5rem; cursor:pointer;">&times;</span>
-            </div>
-            
-            <div id="cropContainer" style="width:100%; background:#000; overflow:hidden; border-radius:8px; position:relative; cursor:move; user-select:none;">
-                <img id="cropImg" src="" style="position:absolute; top:0; left:0; pointer-events:none;">
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events:none; border: 2px solid var(--primary-color);"></div>
-            </div>
-
-            <div style="margin-top:1.5rem; text-align:center;">
-                <div style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem;">
-                    <i class="fas fa-search-minus text-muted"></i>
-                    <input type="range" id="zoomSlider" min="1" max="3" step="0.01" value="1" style="flex:1;">
-                    <i class="fas fa-search-plus text-muted"></i>
-                </div>
-                <small class="text-muted d-block mb-3">Drag the image to position it</small>
-                <button type="button" class="btn btn-primary w-100" onclick="saveEditCrop()">Apply Adjustment</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Core App JS -->
-    <script>
-        window.contextPath = '${pageContext.request.contextPath}';
-        window.loggedInUserId = '${sessionScope.user.userId}';
-        window.currentProfileUserId = '${profileUser.userId}';
+        function acceptRecommendation(id) {
+            updateRecommendationStatus(id, 'ACCEPTED');
+        }
+        function rejectRecommendation(id) {
+            if(confirm("Ignore this recommendation?")) {
+                updateRecommendationStatus(id, 'REJECTED');
+            }
+        }
+        function updateRecommendationStatus(id, status) {
+            fetch(contextPath + '/ProfessionalProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=updateRecommendation&id=' + id + '&status=' + status
+            }).then(res => res.text()).then(data => {
+                if(data === 'success') location.reload();
+                else alert("Failed to update status.");
+            });
+        }
     </script>
     <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>
 

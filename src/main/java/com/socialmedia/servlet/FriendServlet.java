@@ -55,7 +55,7 @@ public class FriendServlet extends HttpServlet {
         int friendId = Integer.parseInt(request.getParameter("friendId"));
 
         if ("send".equals(action)) {
-            friendDAO.sendFriendRequest(currentUser.getUserId(), friendId);
+            friendDAO.sendFriendRequest(currentUser.getUserId(), friendId, null);
         } else if ("accept".equals(action)) {
             // Note: The original sender is friendId, and the current user is the receiver
             boolean success = friendDAO.updateFriendRequestStatus(friendId, currentUser.getUserId(), "ACCEPTED");

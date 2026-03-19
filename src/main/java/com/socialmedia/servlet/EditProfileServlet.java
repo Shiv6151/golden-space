@@ -41,6 +41,8 @@ public class EditProfileServlet extends HttpServlet {
         User currentUser = (User) session.getAttribute("user");
         String name = request.getParameter("name");
         String bio = request.getParameter("bio");
+        String headline = request.getParameter("headline");
+        String summary = request.getParameter("summary");
 
         String photoUrl = currentUser.getProfilePhoto(); // Default to existing
 
@@ -67,6 +69,8 @@ public class EditProfileServlet extends HttpServlet {
 
         currentUser.setName(name);
         currentUser.setBio(bio);
+        currentUser.setHeadline(headline);
+        currentUser.setProfessionalSummary(summary);
         currentUser.setProfilePhoto(photoUrl);
 
         userDAO.updateUserProfile(currentUser);

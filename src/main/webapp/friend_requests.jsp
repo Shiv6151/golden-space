@@ -128,6 +128,11 @@
                                     <p>Sent you a request</p>
                                 </div>
                             </a>
+                            <c:if test="${not empty request.message}">
+                                <div style="flex: 1; margin: 0 2rem; background: var(--bg-light); padding: 0.75rem 1.25rem; border-radius: 8px; font-style: italic; color: var(--text-main); font-size: 0.9rem; border-left: 3px solid var(--primary-color);">
+                                    "${request.message}"
+                                </div>
+                            </c:if>
                             <div class="action-buttons">
                                 <form action="FriendServlet" method="POST" style="display:inline;">
                                     <input type="hidden" name="action" value="accept">

@@ -151,7 +151,7 @@ public class UserDAO {
         return false;
     }
     public boolean updateUserProfile(User user) {
-        String query = "UPDATE Users SET name = ?, bio = ?, profile_photo = ?, is_private = ? WHERE user_id = ?";
+        String query = "UPDATE Users SET name = ?, bio = ?, profile_photo = ?, is_private = ?, headline = ?, professional_summary = ? WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
@@ -159,7 +159,9 @@ public class UserDAO {
             stmt.setString(2, user.getBio());
             stmt.setString(3, user.getProfilePhoto());
             stmt.setInt(4, user.isPrivateAccount() ? 1 : 0);
-            stmt.setInt(5, user.getUserId());
+            stmt.setString(5, user.getHeadline());
+            stmt.setString(6, user.getProfessionalSummary());
+            stmt.setInt(7, user.getUserId());
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -214,6 +216,8 @@ public class UserDAO {
             rs.getString("password"),
             rs.getString("profile_photo"),
             rs.getString("bio"),
+            rs.getString("headline"),
+            rs.getString("professional_summary"),
             rs.getTimestamp("created_at"),
             rs.getInt("is_private") == 1
         );

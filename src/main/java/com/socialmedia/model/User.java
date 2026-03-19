@@ -10,6 +10,8 @@ public class User {
     private String password;
     private String profilePhoto;
     private String bio;
+    private String headline;
+    private String professionalSummary;
     private java.util.Date createdAt;
     private boolean isFollowedByMe;
     private boolean privateAccount;
@@ -17,7 +19,7 @@ public class User {
 
     public User() {}
 
-    public User(int userId, String username, String name, String email, String password, String profilePhoto, String bio, java.util.Date createdAt, boolean privateAccount) {
+    public User(int userId, String username, String name, String email, String password, String profilePhoto, String bio, String headline, String professionalSummary, java.util.Date createdAt, boolean privateAccount) {
         this.userId = userId;
         this.username = username;
         this.name = name;
@@ -25,6 +27,8 @@ public class User {
         this.password = password;
         this.profilePhoto = profilePhoto;
         this.bio = bio;
+        this.headline = headline;
+        this.professionalSummary = professionalSummary;
         this.createdAt = createdAt;
         this.privateAccount = privateAccount;
     }
@@ -49,6 +53,12 @@ public class User {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public String getHeadline() { return headline; }
+    public void setHeadline(String headline) { this.headline = headline; }
+
+    public String getProfessionalSummary() { return professionalSummary; }
+    public void setProfessionalSummary(String professionalSummary) { this.professionalSummary = professionalSummary; }
 
     public java.util.Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(java.util.Date createdAt) { this.createdAt = createdAt; }

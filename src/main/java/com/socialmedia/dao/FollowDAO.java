@@ -121,6 +121,34 @@ public class FollowDAO {
         return mutuals;
     }
 
+    public int getConnectionDegree(int userA, int userB) {
+        if (userA == userB) return 0;
+        
+        // 1st Degree: Mutual Following
+        if (isMutualFollowing(userA, userB)) return 1;
+        
+        // 2nd Degree: Have at least one mutual friend (where friend = mutual follower)
+        String query = 
+            "SELECT 1 FROM followers f1 " +
+            "JOIN followers f2 ON f1.following_id = f2.following_id " +
+            "WHERE f1.follower_id = ? AND f2.follower_id = ? " +
+            "AND f1.following_id IN (SELECT follower_id FROM followers WHERE following_id = f1.following_id) " +
+            "AND f2.following_id IN (SELECT follower_id FROM followers WHERE following_id = f2.following_id) LIMIT 1";
+            
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userA);
+            stmt.setInt(2, userB);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return 2;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return 3;
+    }
+
     private java.util.List<com.socialmedia.model.User> getUsers(String query, int userId, java.util.List<com.socialmedia.model.User> list) {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {

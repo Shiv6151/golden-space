@@ -16,6 +16,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
+import com.socialmedia.dao.ExperienceDAO;
+import com.socialmedia.dao.EducationDAO;
+import com.socialmedia.dao.SkillDAO;
+import com.socialmedia.dao.RecommendationDAO;
+import com.socialmedia.dao.ProfileViewDAO;
+import com.socialmedia.model.Experience;
+import com.socialmedia.model.Education;
+import com.socialmedia.model.UserSkill;
+import com.socialmedia.model.Recommendation;
+import com.socialmedia.model.ProfileView;
 
 @WebServlet("/ProfileServlet")
 public class ProfileServlet extends HttpServlet {
@@ -25,6 +35,11 @@ public class ProfileServlet extends HttpServlet {
     private FollowDAO followDAO;
     private FriendDAO friendDAO;
     private CommentDAO commentDAO;
+    private ExperienceDAO experienceDAO;
+    private EducationDAO educationDAO;
+    private SkillDAO skillDAO;
+    private RecommendationDAO recommendationDAO;
+    private ProfileViewDAO profileViewDAO;
 
     @Override
     public void init() {
@@ -33,6 +48,11 @@ public class ProfileServlet extends HttpServlet {
         followDAO = new FollowDAO();
         friendDAO = new FriendDAO();
         commentDAO = new CommentDAO();
+        experienceDAO = new ExperienceDAO();
+        educationDAO = new EducationDAO();
+        skillDAO = new SkillDAO();
+        recommendationDAO = new RecommendationDAO();
+        profileViewDAO = new ProfileViewDAO();
     }
 
     @Override
@@ -103,6 +123,10 @@ public class ProfileServlet extends HttpServlet {
         if (!isSelf) {
             isMutual = followDAO.isMutualFollowing(currentUser.getUserId(), profileUserId);
             request.setAttribute("isMutualFollowing", isMutual);
+            
+            // Calculate Connection Degree
+            int degree = followDAO.getConnectionDegree(currentUser.getUserId(), profileUserId);
+            request.setAttribute("connectionDegree", degree);
         }
 
         // Privacy Logic: Can the current user see the posts?
@@ -124,6 +148,31 @@ public class ProfileServlet extends HttpServlet {
                 }
             }
             request.setAttribute("userPosts", userPosts);
+        }
+
+        // Fetch Professional Timeline & Skills & Recommendations
+        List<Experience> experiences = experienceDAO.getExperienceByUserId(profileUserId);
+        List<Education> educationList = educationDAO.getEducationByUserId(profileUserId);
+        List<UserSkill> skills = skillDAO.getUserSkills(profileUserId, currentUser.getUserId());
+        List<Recommendation> acceptedRecs = recommendationDAO.getAcceptedRecommendations(profileUserId);
+        
+        if (!isSelf && currentUser != null) {
+            profileViewDAO.recordView(currentUser.getUserId(), profileUserId);
+        }
+        
+        request.setAttribute("experiences", experiences);
+        request.setAttribute("education", educationList);
+        request.setAttribute("skills", skills);
+        request.setAttribute("recommendations", acceptedRecs);
+        
+        if (isSelf) {
+            List<Recommendation> pendingRecs = recommendationDAO.getPendingRecommendations(profileUserId);
+            request.setAttribute("pendingRecommendations", pendingRecs);
+            
+            int viewCount = profileViewDAO.getViewCount(profileUserId);
+            List<ProfileView> recentViews = profileViewDAO.getRecentViews(profileUserId);
+            request.setAttribute("profileViewCount", viewCount);
+            request.setAttribute("recentProfileViews", recentViews);
         }
 
         request.getRequestDispatcher("profile.jsp").forward(request, response);

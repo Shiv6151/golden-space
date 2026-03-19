@@ -9,13 +9,14 @@ import java.util.List;
 
 public class FriendDAO {
 
-    public boolean sendFriendRequest(int userId, int friendId) {
-        String query = "INSERT INTO friend_requests (sender_id, receiver_id, status) VALUES (?, ?, 'PENDING')";
+    public boolean sendFriendRequest(int userId, int friendId, String message) {
+        String query = "INSERT INTO friend_requests (sender_id, receiver_id, status, message) VALUES (?, ?, 'PENDING', ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
             stmt.setInt(1, userId);
             stmt.setInt(2, friendId);
+            stmt.setString(3, message);
             
             if (stmt.executeUpdate() > 0) {
                 new NotificationDAO().addNotification(friendId, userId, "FRIEND_REQUEST", null);
@@ -100,6 +101,7 @@ public class FriendDAO {
                 f.setCreatedAt(rs.getTimestamp("created_at"));
                 f.setFriendName(rs.getString("name"));
                 f.setFriendPhoto(rs.getString("profile_photo"));
+                f.setMessage(rs.getString("message"));
                 requests.add(f);
             }
         } catch (SQLException e) {

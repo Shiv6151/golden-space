@@ -6,6 +6,7 @@ public class Friend {
     private int userId;
     private int friendId;
     private String status; // 'PENDING', 'ACCEPTED', 'REJECTED'
+    private String message;
     private Timestamp createdAt;
 
     // For display purposes, to show info about the friend
@@ -31,4 +32,7 @@ public class Friend {
 
     public String getFriendPhoto() { return friendPhoto; }
     public void setFriendPhoto(String friendPhoto) { this.friendPhoto = friendPhoto; }
+
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 }
