@@ -207,6 +207,35 @@ public class UserDAO {
         return false;
     }
 
+    public java.util.List<User> getBlockedUsers(int blockerId) {
+        java.util.List<User> blockedUsers = new java.util.ArrayList<>();
+        String query = "SELECT u.* FROM Users u JOIN blocked_users b ON u.user_id = b.blocked_id WHERE b.blocker_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, blockerId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                blockedUsers.add(extractUserFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return blockedUsers;
+    }
+
+    public boolean unblockUser(int blockerId, int blockedId) {
+        String query = "DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private User extractUserFromResultSet(ResultSet rs) throws SQLException {
         return new User(
             rs.getInt("user_id"),

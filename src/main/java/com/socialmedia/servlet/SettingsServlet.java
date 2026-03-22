@@ -122,6 +122,26 @@ public class SettingsServlet extends HttpServlet {
             } else {
                 response.getWriter().write("{\"success\": false, \"message\": \"Unauthorized request. Please verify OTP first.\"}");
             }
+        } else if ("getBlockedUsers".equals(action)) {
+            response.setContentType("application/json");
+            java.util.List<User> blocked = userDAO.getBlockedUsers(currentUser.getUserId());
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < blocked.size(); i++) {
+                User u = blocked.get(i);
+                String profilePhoto = u.getProfilePhoto() != null ? u.getProfilePhoto() : "images/default-avatar.png";
+                json.append(String.format("{\"id\":%d, \"name\":\"%s\", \"username\":\"%s\", \"photo\":\"%s\"}", 
+                    u.getUserId(), u.getName(), u.getUsername(), profilePhoto));
+                if (i < blocked.size() - 1) json.append(",");
+            }
+            json.append("]");
+            response.getWriter().write(json.toString());
+        } else if ("unblockUser".equals(action)) {
+            int targetId = Integer.parseInt(request.getParameter("targetId"));
+            if (userDAO.unblockUser(currentUser.getUserId(), targetId)) {
+                response.getWriter().write("success");
+            } else {
+                response.getWriter().write("error");
+            }
         }
     }
 

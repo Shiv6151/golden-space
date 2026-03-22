@@ -673,16 +673,18 @@
                                             </c:if>
 
                                             ${msg.messageText}
-                                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:4px;">
-                                                <div class="msg-time local-time-convert" data-time="${msg.messageTime.time}" data-format="time">
-                                                    <i class="fas fa-clock fa-spin" style="font-size:8px;"></i>
+                                            <div style="display:flex; flex-direction: column; align-items: flex-end; margin-top: 4px;">
+                                                <div style="display:flex; align-items:center; gap:4px;">
+                                                    <span class="msg-time" style="font-size: 0.65rem; opacity: 0.7;">
+                                                        <fmt:formatDate value="${msg.messageTime}" pattern="HH:mm" />
+                                                    </span>
+                                                    <c:if test="${msg.senderId == sessionScope.user.userId && loop.last}">
+                                                        <c:choose>
+                                                            <c:when test="${msg.read}"><span style="font-size:0.65rem; color:inherit; opacity:0.6;">Seen</span></c:when>
+                                                            <c:otherwise><span style="font-size:0.65rem; color:inherit; opacity:0.6;">Sent</span></c:otherwise>
+                                                        </c:choose>
+                                                    </c:if>
                                                 </div>
-                                                <c:if test="${msg.senderId == sessionScope.user.userId && loop.last}">
-                                                    <c:choose>
-                                                        <c:when test="${msg.read}"><span style="font-size:0.7rem; color:inherit; opacity:0.6; margin-left:2px;">Seen</span></c:when>
-                                                        <c:otherwise><span style="font-size:0.7rem; color:inherit; opacity:0.6; margin-left:2px;">Sent</span></c:otherwise>
-                                                    </c:choose>
-                                                </c:if>
                                             </div>
                                             <div id="msg-reactions-${msg.messageId}" class="msg-reactions"></div>
                                             
@@ -712,7 +714,7 @@
                                         </div>
                                         
                                         <!-- Emoji Picker -->
-                                        <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup" style="display:none; position:absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;">
+                                        <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup" style="display:none; position:absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; grid-template-columns: repeat(6, 1fr); gap: 6px;">
                                             <c:forTokens items="❤️,🔥,😂,😮,👏,🙌,😢,👍,👎,😀,😃,😄,😁,😆,😅,🤣,🥲,☺️,😊,😇,🙂,🙃,😉,😌,😍,🥰,😘,😗,😙,😚,😋,😛,😝,😜,🤪,🤨,🧐,🤓,😎,🥸,🤩,🥳,😏,😒,😞,😔,😟,😕,🙁,☹️,😣,😖,😫,😩,🥺,😭,😤,😠,😡,🤬,🤯,😳,🥵,🥶,😱,😨,😰,😥,😓,👋,🤚,🖐,✋,🖖,👌,🤌,🤏,✌️,🤞,🤟,🤘,🤙,👈,👉,👆,🖕,👇,☝️,✊,👊,🤛,🤜,👐,🤲,🤝,🙏,✨,💯" delims="," var="emoji">
                                                 <span onclick="toggleMessageReaction('${msg.messageId}', '${emoji}', event)" style="cursor:pointer; font-size:1.4rem; text-align:center; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">${emoji}</span>
                                             </c:forTokens>
@@ -995,7 +997,7 @@
                                     </div>
                                 </div>
                                 
-                                <div id="emoji-picker-\${msg.id}" class="emoji-picker-popup" style="display:none; position:absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;">
+                                <div id="emoji-picker-\${msg.id}" class="emoji-picker-popup" style="display:none; position:absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; grid-template-columns: repeat(6, 1fr); gap: 6px;">
                                     \${"❤️,🔥,😂,😮,👏,🙌,😢,👍,👎,😀,😃,😄,😁,😆,😅,🤣,🥲,☺️,😊,😇,🙂,🙃,😉,😌,😍,🥰,😘,😗,😙,😚,😋,😛,😝,😜,🤪,🤨,🧐,🤓,😎,🥸,🤩,🥳,😏,😒,😞,😔,😟,😕,🙁,☹️,😣,😖,😫,😩,🥺,😭,😤,😠,😡,🤬,🤯,😳,🥵,🥶,😱,😨,😰,😥,😓,👋,🤚,🖐,✋,🖖,👌,🤌,🤏,✌️,🤞,🤟,🤘,🤙,👈,👉,👆,🖕,👇,☝️,✊,👊,🤛,🤜,👐,🤲,🤝,🙏,✨,💯".split(',').map(emoji => 
                                         '<span onclick="toggleMessageReaction(\\''+msg.id+'\\', \\''+emoji+'\\', event)" style="cursor:pointer; font-size:1.4rem; text-align:center; transition:transform 0.1s;" onmouseover="this.style.transform=\\'scale(1.2)\\'" onmouseout="this.style.transform=\\'scale(1)\\'">'+emoji+'</span>'
                                     ).join('')}
@@ -1078,28 +1080,33 @@
             { id: "dark", name: "Dark Mode", bg: "#1f2937", sent: "#3b82f6", received: "#374151", sentText: "white", receivedText: "#f3f4f6" },
             { id: "ocean", name: "Ocean Blue", bg: "linear-gradient(to right, #00c6ff, #0072ff)", sent: "rgba(255,255,255,0.9)", received: "rgba(0,0,0,0.6)", sentText: "#0072ff", receivedText: "white" },
             { id: "sunset", name: "Sunset Orange", bg: "linear-gradient(to top, #ff7e5f, #feb47b)", sent: "#ff512f", received: "#fff", sentText: "white", receivedText: "#333" },
-            { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" }
+            { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" },
+            { id: "custom", name: "Custom", bg: "var(--custom-bg, #fff)", sent: "var(--primary-color)", received: "var(--bg-white)", sentText: "white", receivedText: "var(--text-main)" }
         ];
 
         function applyTheme(themeId) {
             const theme = chatThemes.find(t => t.id === themeId);
             if (!theme) return;
             
-            const chatMainBg = document.getElementById('chatMainBg');
+            const chatMainBg = document.getElementById('chatWindow');
             if (chatMainBg) {
-                // Ignore background if user uploaded custom bg earlier, unless they revert to default
-                const hasCustomBg = localStorage.getItem('chatBg_' + window.currentUserId);
-                if (!hasCustomBg || themeId !== 'default') {
-                    chatMainBg.style.background = theme.bg;
-                    if(themeId === 'default' && hasCustomBg) {
-                        chatMainBg.style.backgroundImage = 'url('+hasCustomBg+')';
-                        chatMainBg.style.backgroundSize = 'cover';
-                    } else {
-                        chatMainBg.style.backgroundImage = 'none';
+                if (themeId === 'custom') {
+                    const customBg = localStorage.getItem('chatCustomBg_' + window.currentUserId) || '#ffffff';
+                    chatMainBg.style.background = customBg;
+                    chatMainBg.style.backgroundImage = customBg.includes('gradient') ? customBg : 'none';
+                } else {
+                    const hasCustomImg = localStorage.getItem('chatBg_' + window.currentUserId);
+                    if (!hasCustomImg || themeId !== 'default') {
+                        chatMainBg.style.background = theme.bg;
+                        if(themeId === 'default' && hasCustomImg) {
+                            chatMainBg.style.backgroundImage = 'url('+hasCustomImg+')';
+                            chatMainBg.style.backgroundSize = 'cover';
+                        } else {
+                            chatMainBg.style.backgroundImage = theme.bg.includes('gradient') ? theme.bg : 'none';
+                        }
                     }
                 }
                 
-                // Add variables to local context
                 chatMainBg.style.setProperty('--chat-msg-sent', theme.sent);
                 chatMainBg.style.setProperty('--chat-msg-recv', theme.received);
                 chatMainBg.style.setProperty('--chat-text-sent', theme.sentText);
@@ -1110,7 +1117,7 @@
             }
             localStorage.setItem('chatTheme_' + window.currentUserId, themeId);
             document.getElementById('chatThemeModal').style.display='none';
-            renderThemes(); // Re-render to show active checkmark
+            renderThemes();
         }
 
         function renderThemes() {
@@ -1131,6 +1138,29 @@
                     </div>
                 `;
             });
+
+            // Add Custom Base UI
+            grid.innerHTML += `
+                <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+                    <label style="font-weight:600; display:block; margin-bottom:0.5rem;">Custom Background</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="color" id="customColorPicker" onchange="applyCustomBg(this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;" value="#ffffff">
+                        <select onchange="applyCustomBg(this.value)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-white);">
+                            <option value="">Solid Color</option>
+                            <option value="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Royal Purple</option>
+                            <option value="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">Soft Pink</option>
+                            <option value="linear-gradient(45deg, #8baaaa 0%, #ae8b9c 100%)">Muted Blend</option>
+                            <option value="linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)">Sugar Fresh</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function applyCustomBg(val) {
+            if (!val) return;
+            localStorage.setItem('chatCustomBg_' + window.currentUserId, val);
+            applyTheme('custom');
         }
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -1299,11 +1329,11 @@
         function toggleEmojiPicker(messageId, e) {
             e.stopPropagation();
             const picker = document.getElementById('emoji-picker-' + messageId);
-            if (picker.style.display === 'flex') {
+            if (picker.style.display === 'grid') {
                 picker.style.display = 'none';
             } else {
                 document.querySelectorAll('.emoji-picker-popup').forEach(p => p.style.display = 'none');
-                picker.style.display = 'flex';
+                picker.style.display = 'grid';
             }
         }
         
@@ -1479,6 +1509,12 @@
 <script>
 function goBackToSidebar() {
     document.body.classList.remove('chat-open');
+}
+function goToFirstMessage() {
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) {
+        chatWindow.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 function toggleMobileSidebar() {
     document.body.classList.toggle('sidebar-active');

@@ -245,7 +245,14 @@
                             <input type="password" id="newPassword" placeholder="New Password" class="form-input" required>
                             <button type="submit" style="width:100%; padding:0.8rem; background:linear-gradient(135deg,var(--primary-color),#ff6b81); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; font-family:inherit; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Update Password</button>
                         </form>
-                        <div id="passwordMessage" style="font-size:0.9rem; text-align:center; margin-top: 0.5rem;"></div>
+                    <hr style="border:0; border-top:1px solid var(--border-color); margin: 0.5rem 0;">
+                    
+                    <!-- Blocked Users -->
+                    <div style="margin-top: 1rem;">
+                        <button type="button" onclick="loadBlockedUsers()" class="btn btn-outline" style="width:100%; border:1px solid var(--border-color); color:var(--text-main);"><i class="fas fa-user-slash" style="margin-right:8px;"></i> Manage Blocked Users</button>
+                        <div id="blockedUsersList" style="display:none; margin-top:1rem; border:1px solid var(--border-color); border-radius:12px; max-height:200px; overflow-y:auto; background:var(--bg-light);">
+                            <!-- Blocked users will be loaded here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -275,9 +282,9 @@
                                 <div style="font-size: 0.85rem; color: var(--text-muted);">Set a wallpaper for conversations</div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button type="button" onclick="document.getElementById('settingChatBgInput').click()" class="btn btn-primary" style="padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.85rem; color: white;">Change</button>
-                            <button type="button" onclick="removeChatBgSetting()" class="btn" style="padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); color: var(--danger-color); font-size: 0.85rem; background: transparent;">Remove</button>
+                        <div class="chat-bg-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <button type="button" onclick="document.getElementById('settingChatBgInput').click()" class="btn btn-primary" style="padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.85rem; color: white; white-space: nowrap;">Change</button>
+                            <button type="button" onclick="removeChatBgSetting()" class="btn" style="padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); color: var(--danger-color); font-size: 0.85rem; background: transparent; white-space: nowrap;">Remove</button>
                         </div>
                         <input type="file" id="settingChatBgInput" accept="image/*" style="display:none" onchange="handleSettingChatBg(this)">
                     </div>
@@ -425,12 +432,8 @@
             { id: "dark", name: "Dark Mode", bg: "#1f2937", sent: "#3b82f6", received: "#374151", sentText: "white", receivedText: "#f3f4f6" },
             { id: "ocean", name: "Ocean Blue", bg: "linear-gradient(to right, #00c6ff, #0072ff)", sent: "rgba(255,255,255,0.9)", received: "rgba(0,0,0,0.6)", sentText: "#0072ff", receivedText: "white" },
             { id: "sunset", name: "Sunset Orange", bg: "linear-gradient(to top, #ff7e5f, #feb47b)", sent: "#ff512f", received: "#fff", sentText: "white", receivedText: "#333" },
-            { id: "forest", name: "Forest Green", bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", sent: "#15803d", received: "#fff", sentText: "white", receivedText: "#15803d" },
             { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" },
-            { id: "cherry", name: "Cherry Blossom", bg: "linear-gradient(to top, #ff0844 0%, #ffb199 100%)", sent: "#e11d48", received: "#ffe4e6", sentText: "white", receivedText: "#881337" },
-            { id: "midnight", name: "Midnight City", bg: "linear-gradient(to top, #0f2027, #203a43, #2c5364)", sent: "#06b6d4", received: "rgba(255,255,255,0.1)", sentText: "white", receivedText: "white" },
-            { id: "neon", name: "Neon Vibes", bg: "#000000", sent: "#ff00ff", received: "#00ffff", sentText: "white", receivedText: "black" },
-            { id: "coffee", name: "Coffee Warm", bg: "#dfd2c0", sent: "#8b5a2b", received: "#fff8dc", sentText: "white", receivedText: "#4a3b2c" }
+            { id: "custom", name: "Custom", bg: "var(--custom-bg, #fff)", sent: "var(--primary-color)", received: "var(--bg-white)", sentText: "white", receivedText: "var(--text-main)" }
         ];
 
         function renderSettingThemes() {
@@ -451,6 +454,29 @@
                 `;
             });
             grid.innerHTML = html;
+
+            // Add Custom Base UI
+            grid.innerHTML += `
+                <div style="grid-column: 1/-1; margin-top:0.5rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+                    <label style="font-weight:600; display:block; margin-bottom:0.5rem; font-size:0.9rem;">Custom Background Color/Gradient</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="color" id="settingCustomColorPicker" onchange="applySettingCustomBg(this.value)" style="width:36px; height:36px; border:none; border-radius:8px; cursor:pointer;" value="#ffffff">
+                        <select onchange="applySettingCustomBg(this.value)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-white); font-size:0.85rem; height:36px;">
+                            <option value="">Solid Color</option>
+                            <option value="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Royal Purple</option>
+                            <option value="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">Soft Pink</option>
+                            <option value="linear-gradient(45deg, #8baaaa 0%, #ae8b9c 100%)">Muted Blend</option>
+                            <option value="linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)">Sugar Fresh</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function applySettingCustomBg(val) {
+            if (!val) return;
+            localStorage.setItem('chatCustomBg_${sessionScope.user.userId}', val);
+            applySettingTheme('custom');
         }
 
         function applySettingTheme(themeId) {
@@ -580,6 +606,75 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Verify OTP';
                 alert('Error verifying OTP.');
+            });
+        }
+
+        function loadBlockedUsers() {
+            const listDiv = document.getElementById('blockedUsersList');
+            if (listDiv.style.display === 'block') {
+                listDiv.style.display = 'none';
+                return;
+            }
+            
+            listDiv.innerHTML = '<div style="padding:1rem; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            listDiv.style.display = 'block';
+            
+            fetch((window.contextPath || '') + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=getBlockedUsers'
+            })
+            .then(res => res.json())
+            .then(users => {
+                if (users.length === 0) {
+                    listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No blocked users found.</div>';
+                    return;
+                }
+                
+                let html = '';
+                users.forEach(u => {
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                            <div style="display:flex; align-items:center; gap:0.75rem;">
+                                <img src="\${u.photo}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+                                <div>
+                                    <div style="font-weight:600; font-size:0.9rem;">\${u.name}</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">@\${u.username}</div>
+                                </div>
+                            </div>
+                            <button onclick="unblockUser(\${u.id}, this)" class="btn btn-sm" style="color:var(--primary-color); font-weight:600; font-size:0.8rem;">Unblock</button>
+                        </div>
+                    `;
+                });
+                listDiv.innerHTML = html;
+            });
+        }
+
+        function unblockUser(id, btn) {
+            if (!confirm("Are you sure you want to unblock this user?")) return;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            
+            fetch((window.contextPath || '') + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=unblockUser&targetId=' + id
+            })
+            .then(res => res.text())
+            .then(data => {
+                if (data === 'success') {
+                    btn.closest('div[style*="border-bottom"]').remove();
+                    // If no more items, show message
+                    const listDiv = document.getElementById('blockedUsersList');
+                    if (listDiv.children.length === 0) {
+                        listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No blocked users found.</div>';
+                    }
+                } else {
+                    alert("Failed to unblock user.");
+                    btn.innerHTML = 'Unblock';
+                    btn.disabled = false;
+                }
             });
         }
 

@@ -559,12 +559,6 @@ const ThemeManager = {
 };
 
 // Profile Grid & Modal Logic
-function handleFollowClick(type, targetId, canSee) {
-    if (canSee) {
-        showFollowModal(type, targetId);
-    }
-}
-
 function showPostDetail(postId) {
     const modal = document.getElementById('postDetailModal');
     if (!modal) return;
@@ -1549,9 +1543,10 @@ document.addEventListener('click', () => {
 
 window.currentFollowListOrig = [];
 function handleFollowClick(type, targetUserId, canSeePosts) {
-    const modal = document.getElementById('followListModal');
-    const title = document.getElementById('followListTitle');
-    const body  = document.getElementById('followListBody');
+    if (canSeePosts === 'false' || canSeePosts === false) return;
+    const modal = document.getElementById('followModal');
+    const title = document.getElementById('followModalTitle');
+    const body  = document.getElementById('followModalContent');
     const searchInput = document.getElementById('follow-list-search');
     if (!modal) return;
 
@@ -1586,7 +1581,7 @@ function filterFollowList() {
 }
 
 function renderFollowList(users) {
-    const body = document.getElementById('followListBody');
+    const body = document.getElementById('followModalContent');
     if (!users || users.length === 0) {
         body.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No users found.</div>';
         return;

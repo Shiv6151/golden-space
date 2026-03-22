@@ -120,9 +120,9 @@ public class InteractionServlet extends HttpServlet {
             int targetId = Integer.parseInt(request.getParameter("targetId"));
             User targetUser = userDAO.getUserById(targetId);
             boolean isSelf = (currentUser.getUserId() == targetId);
-            boolean isMutual = followDAO.isMutualFollowing(currentUser.getUserId(), targetId);
+            boolean isFollowing = followDAO.isFollowing(currentUser.getUserId(), targetId);
             
-            if (isSelf || !targetUser.isPrivateAccount() || isMutual) {
+            if (isSelf || !targetUser.isPrivateAccount() || isFollowing) {
                 java.util.List<com.socialmedia.model.User> users = followDAO.getFollowers(targetId);
                 sendUserListJson(response, users);
             } else {
@@ -133,9 +133,9 @@ public class InteractionServlet extends HttpServlet {
             int targetId = Integer.parseInt(request.getParameter("targetId"));
             User targetUser = userDAO.getUserById(targetId);
             boolean isSelf = (currentUser.getUserId() == targetId);
-            boolean isMutual = followDAO.isMutualFollowing(currentUser.getUserId(), targetId);
+            boolean isFollowing = followDAO.isFollowing(currentUser.getUserId(), targetId);
             
-            if (isSelf || !targetUser.isPrivateAccount() || isMutual) {
+            if (isSelf || !targetUser.isPrivateAccount() || isFollowing) {
                 java.util.List<com.socialmedia.model.User> users = followDAO.getFollowing(targetId);
                 sendUserListJson(response, users);
             } else {
