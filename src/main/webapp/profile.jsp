@@ -126,7 +126,7 @@
         <!-- Elevated Premium Profile Header Section -->
         <div class="ig-profile-header" style="position: relative; background: var(--bg-white); border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); padding: 3rem 2.5rem; border: 1px solid rgba(0,0,0,0.05); margin-bottom: 2rem;">
             <c:if test="${isSelf}">
-                <a href="settings.jsp" style="position: absolute; top: 1.5rem; right: 1.5rem; color: var(--text-muted); font-size: 1.4rem; transition: all 0.2s; text-decoration: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-light);" onmouseover="this.style.color='var(--primary-color)'; this.style.transform='rotate(45deg)';" onmouseout="this.style.color='var(--text-muted)'; this.style.transform='rotate(0)';" title="Settings">
+                <a href="settings.jsp" style="position: absolute; top: 1.5rem; right: 1.5rem; color: var(--text-muted); font-size: 1.4rem; transition: all 0.2s; text-decoration: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-light);" onmouseover="this.style.color='var(--primary-color)'; this.style.transform='rotate(45deg)';" onmouseout="this.style.color='var(--text-muted)'; this.style.transform='rotate(0)';">
                     <i class="fas fa-cog"></i>
                 </a>
             </c:if>
@@ -325,8 +325,8 @@
                 </div>
                 <div id="education-list">
                     <c:choose>
-                        <c:when test="${not empty educationList}">
-                            <c:forEach var="edu" items="${educationList}">
+                        <c:when test="${not empty education}">
+                            <c:forEach var="edu" items="${education}">
                                 <div class="timeline-item" style="position: relative; padding-bottom: 1.5rem;">
                                     <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">${edu.school}</div>
                                     <div style="font-weight: 500; font-size: 1rem;">${edu.degree}, ${edu.fieldOfStudy}</div>

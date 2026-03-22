@@ -158,11 +158,9 @@
         }
         .msg-reactions {
             display: flex;
+            flex-wrap: wrap;
             gap: 4px;
-            position: absolute;
-            bottom: -15px;
-            left: 10px;
-            z-index: 2;
+            margin-top: 6px;
         }
         .msg-options-trigger {
             position: absolute;
@@ -181,8 +179,7 @@
             opacity: 1 !important;
         }
         .message-sent .msg-reactions {
-            left: auto;
-            right: 10px;
+            justify-content: flex-end;
         }
         .reaction-item {
             background: var(--bg-white);
@@ -520,12 +517,7 @@
                             <h3 style="margin: 0;"><a href="#" onclick="openSharedMediaModal(); return false;" style="color: inherit;" title="View Shared Media">${chatUser.name}</a></h3>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <!-- Change Background Button -->
-                            <button id="changeChatBgBtn" class="btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px;" title="Change Background">
-                                <i class="fas fa-image" style="font-size: 1.2rem;"></i>
-                            </button>
-                            <input type="file" id="chatBgInput" accept="image/*" style="display:none">
-                            
+                            <!-- Video Call Button -->
                             <button id="startVideoCallBtn" class="btn" style="background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 8px;" title="Video Call">
                                 <i class="fas fa-video" style="font-size: 1.2rem;"></i>
                             </button>
@@ -541,9 +533,6 @@
                                     </div>
                                     <div class="dropdown-item" onclick="goToFirstMessage()" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
                                         <i class="fas fa-arrow-up" style="width: 24px; color:#10b981;"></i> Go to First Message
-                                    </div>
-                                    <div class="dropdown-item" onclick="removeChatBackground()" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
-                                        <i class="fas fa-image-slash" style="width: 24px; color:var(--text-muted);"></i> Remove Background
                                     </div>
                                     <div class="dropdown-item text-danger" onclick="blockUserConfirm('${chatUser.userId}')" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--danger-light, #ffe4e6)'" onmouseout="this.style.background='transparent'">
                                         <i class="fas fa-ban" style="width: 24px;"></i> Block User
@@ -1015,68 +1004,12 @@
                     
                     <!-- Chat Background Image Logic -->
                     <script>
-                        const bgInput = document.getElementById('chatBgInput');
-                        const changeBgBtn = document.getElementById('changeChatBgBtn');
                         const chatMainBg = document.getElementById('chatWindow'); // Applies to messages area
-                        
-                        // Remove Background Hook
-                        window.removeChatBackground = function() {
-                            localStorage.removeItem('chatBg_' + window.currentUserId);
-                            if(chatMainBg) chatMainBg.style.backgroundImage = 'none';
-                            const dropdown = document.getElementById('chatHeaderMenu');
-                            if(dropdown) dropdown.style.display = 'none';
-                        };
-
-                        const savedBg = localStorage.getItem('chatBg_' + window.currentUserId);
-                        if (savedBg) {
+                        const savedBg = localStorage.getItem('chatBg_${sessionScope.user.userId}');
+                        if (savedBg && chatMainBg) {
                             chatMainBg.style.backgroundImage = `url(\${savedBg})`;
                             chatMainBg.style.backgroundSize = 'cover';
                             chatMainBg.style.backgroundPosition = 'center';
-                        }
-
-                        if (changeBgBtn && bgInput) {
-                            changeBgBtn.onclick = () => bgInput.click();
-                            
-                            bgInput.onchange = (e) => {
-                                const file = e.target.files[0];
-                                if (!file) return;
-                                
-                                const reader = new FileReader();
-                                reader.onload = (event) => {
-                                    // Compress image using Canvas to save localStorage space
-                                    const img = new Image();
-                                    img.onload = () => {
-                                        const canvas = document.createElement('canvas');
-                                        let width = img.width;
-                                        let height = img.height;
-                                        const MAX_WIDTH = 800;
-                                        const MAX_HEIGHT = 800;
-                                        
-                                        if (width > height) {
-                                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                                        } else {
-                                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                                        }
-                                        
-                                        canvas.width = width;
-                                        canvas.height = height;
-                                        const ctx = canvas.getContext('2d');
-                                        ctx.drawImage(img, 0, 0, width, height);
-                                        
-                                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality JPEG
-                                        try {
-                                            localStorage.setItem('chatBg_' + window.currentUserId, dataUrl);
-                                            chatMainBg.style.backgroundImage = `url(\${dataUrl})`;
-                                            chatMainBg.style.backgroundSize = 'cover';
-                                            chatMainBg.style.backgroundPosition = 'center';
-                                        } catch (e) {
-                                            alert("Image too large to save. Try a smaller image.");
-                                        }
-                                    };
-                                    img.src = event.target.result;
-                                };
-                                reader.readAsDataURL(file);
-                            };
                         }
                     </script>
                     
@@ -1345,10 +1278,20 @@
         
         // Hide dropdowns when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.msg-dropdown-menu') && !e.target.closest('.msg-options-trigger') && !e.target.closest('.message-bubble')) {
+            if (!e.target.closest('.msg-dropdown-menu') && !e.target.closest('.msg-options-trigger') && !e.target.closest('.message-bubble') && !e.target.closest('button[onclick="toggleChatHeaderMenu(event)"]')) {
                 document.querySelectorAll('.msg-dropdown-menu').forEach(menu => menu.style.display = 'none');
             }
         });
+        
+        function toggleChatHeaderMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('chatHeaderMenu');
+            // Hide other menus
+            document.querySelectorAll('.msg-dropdown-menu').forEach(m => {
+                if(m !== menu) m.style.display = 'none';
+            });
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
     </script>
     
     <!-- Message Reaction Logic -->
