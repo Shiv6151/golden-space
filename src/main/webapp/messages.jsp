@@ -164,6 +164,22 @@
             left: 10px;
             z-index: 2;
         }
+        .msg-options-trigger {
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        .message-bubble:hover .msg-options-trigger {
+            opacity: 0.6;
+        }
+        .msg-options-trigger:hover {
+            opacity: 1 !important;
+        }
         .message-sent .msg-reactions {
             left: auto;
             right: 10px;
@@ -526,6 +542,9 @@
                                     <div class="dropdown-item" onclick="goToFirstMessage()" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
                                         <i class="fas fa-arrow-up" style="width: 24px; color:#10b981;"></i> Go to First Message
                                     </div>
+                                    <div class="dropdown-item" onclick="removeChatBackground()" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-image-slash" style="width: 24px; color:var(--text-muted);"></i> Remove Background
+                                    </div>
                                     <div class="dropdown-item text-danger" onclick="blockUserConfirm('${chatUser.userId}')" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--danger-light, #ffe4e6)'" onmouseout="this.style.background='transparent'">
                                         <i class="fas fa-ban" style="width: 24px;"></i> Block User
                                     </div>
@@ -665,16 +684,16 @@
                                                 </div>
                                                 <c:if test="${msg.senderId == sessionScope.user.userId}">
                                                     <c:choose>
-                                                        <c:when test="${msg.read}"><i class="fas fa-check-double" style="font-size:10px; color:#3b82f6;" title="Seen"></i></c:when>
-                                                        <c:otherwise><i class="fas fa-check" style="font-size:10px; color:var(--text-muted);" title="Sent"></i></c:otherwise>
+                                                        <c:when test="${msg.read}"><i class="fas fa-check-double" style="font-size:10px; color:inherit; opacity:0.9;" title="Seen"></i></c:when>
+                                                        <c:otherwise><i class="fas fa-check" style="font-size:10px; color:inherit; opacity:0.7;" title="Sent"></i></c:otherwise>
                                                     </c:choose>
                                                 </c:if>
                                             </div>
                                             <div id="msg-reactions-${msg.messageId}" class="msg-reactions"></div>
-                                        </div>
-                                        
-                                        <div class="msg-options-trigger" onclick="toggleMsgOptions('${msg.messageId}', event)" style="padding: 0 8px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;">
-                                            <i class="fas fa-ellipsis-v"></i>
+                                            
+                                            <div class="msg-options-trigger" onclick="toggleMsgOptions('${msg.messageId}', event)">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </div>
                                         </div>
                                         
                                         <!-- Message Dropdown Menu -->
@@ -1000,6 +1019,14 @@
                         const changeBgBtn = document.getElementById('changeChatBgBtn');
                         const chatMainBg = document.getElementById('chatWindow'); // Applies to messages area
                         
+                        // Remove Background Hook
+                        window.removeChatBackground = function() {
+                            localStorage.removeItem('chatBg_' + window.currentUserId);
+                            if(chatMainBg) chatMainBg.style.backgroundImage = 'none';
+                            const dropdown = document.getElementById('chatHeaderMenu');
+                            if(dropdown) dropdown.style.display = 'none';
+                        };
+
                         const savedBg = localStorage.getItem('chatBg_' + window.currentUserId);
                         if (savedBg) {
                             chatMainBg.style.backgroundImage = `url(\${savedBg})`;
