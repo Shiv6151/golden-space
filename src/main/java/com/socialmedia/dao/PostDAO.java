@@ -377,7 +377,7 @@ public class PostDAO {
             "AS is_liked_by_me " +
             "FROM Posts p " +
             "JOIN Users u ON p.user_id = u.user_id " +
-            "WHERE p.post_content LIKE ? " +
+            "WHERE LOWER(p.post_content) LIKE LOWER(?) " +
             "AND (u.is_private = 0 OR p.user_id = ? OR " +
             "     p.user_id IN (SELECT following_id FROM followers WHERE follower_id = ?)) " +
             "ORDER BY p.post_date DESC";
@@ -387,8 +387,8 @@ public class PostDAO {
              
             stmt.setInt(1, currentUserId);
             
-            // Allow user to search "new" and match `#new`
-            String searchPattern = hashtag.startsWith("#") ? "%" + hashtag + "%" : "%#" + hashtag + "%";
+            // Search text anywhere, ignoring casing, and ignoring '#' constraints
+            String searchPattern = "%" + hashtag + "%";
             stmt.setString(2, searchPattern);
             
             stmt.setInt(3, currentUserId);

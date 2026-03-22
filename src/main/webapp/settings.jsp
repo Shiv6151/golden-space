@@ -236,7 +236,10 @@
                     
                     <!-- Change Password -->
                     <div>
-                        <div style="font-weight:600; color:var(--text-main); margin-bottom: 0.5rem;">Change Password</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                            <div style="font-weight:600; color:var(--text-main);">Change Password</div>
+                            <a href="javascript:void(0)" onclick="startForgotPasswordFlow()" style="font-size:0.85rem; color:var(--primary-color); text-decoration:none; font-weight:600;">Forgot Password?</a>
+                        </div>
                         <form id="passwordForm" onsubmit="updatePassword(event)">
                             <input type="password" id="currentPassword" placeholder="Current Password" class="form-input" required>
                             <input type="password" id="newPassword" placeholder="New Password" class="form-input" required>
@@ -518,6 +521,139 @@
                 document.getElementById('themeStatus').innerText = darkNow ? 'On' : 'Off';
             };
         });
+
+        // Forgot Password Flow
+        function startForgotPasswordFlow() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.style.pointerEvents = 'none';
+
+            fetch((window.contextPath || '') + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=sendOtp'
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.style.pointerEvents = 'auto';
+                if (data.success) {
+                    document.getElementById('otpModal').style.display = 'flex';
+                } else {
+                    alert(data.message || 'Failed to send OTP.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.innerHTML = originalText;
+                btn.style.pointerEvents = 'auto';
+                alert('An error occurred while sending the OTP.');
+            });
+        }
+
+        function verifyOtp() {
+            const otp = document.getElementById('otpInput').value;
+            if (!otp || otp.length < 6) { return alert("Please enter a valid 6-digit OTP."); }
+            
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            fetch((window.contextPath || '') + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=verifyOtp&otp=' + otp
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = 'Verify OTP';
+                if (data.success) {
+                    document.getElementById('otpModal').style.display = 'none';
+                    document.getElementById('resetPasswordModal').style.display = 'flex';
+                } else {
+                    alert(data.message || 'Invalid OTP.');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = 'Verify OTP';
+                alert('Error verifying OTP.');
+            });
+        }
+
+        function submitNewPassword() {
+            const pass1 = document.getElementById('newResetPassword').value;
+            const pass2 = document.getElementById('confirmResetPassword').value;
+            if (!pass1 || pass1.length < 6) { return alert("Password must be at least 6 characters."); }
+            if (pass1 !== pass2) { return alert("Passwords do not match."); }
+
+            const btn = document.getElementById('submitNewPassBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+
+            fetch((window.contextPath || '') + '/SettingsServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=resetPasswordWithOtp&newPassword=' + encodeURIComponent(pass1)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = 'Reset Password';
+                if (data.success) {
+                    document.getElementById('resetPasswordModal').style.display = 'none';
+                    alert('Password has been successfully changed!');
+                    document.getElementById('newResetPassword').value = '';
+                    document.getElementById('confirmResetPassword').value = '';
+                    document.getElementById('otpInput').value = '';
+                } else {
+                    alert(data.message || 'Failed to reset password.');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = 'Reset Password';
+                alert('Error resetting password.');
+            });
+        }
     </script>
+
+    <!-- Forgot Password OTP Modal -->
+    <div id="otpModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9000; position:fixed; top:0; left:0; width:100%; height:100%;">
+        <div class="modal-content card" style="max-width:400px; width:95%; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-white);">
+                <h3 style="margin: 0; display:flex; align-items:center; gap:0.5rem;"><i class="fas fa-envelope-open-text text-primary"></i> Verify OTP</h3>
+                <span class="close" onclick="document.getElementById('otpModal').style.display='none'" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div style="padding: 1.5rem; background: var(--bg-light);">
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">We've sent a 6-digit OTP to your registered email address. Please enter it below.</p>
+                <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit OTP" maxlength="6" style="text-align:center; font-size:1.5rem; letter-spacing:0.5rem; margin-bottom:1rem;">
+                <button class="btn btn-primary" onclick="verifyOtp()" style="width:100%;" id="verifyOtpBtn">Verify OTP</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9000; position:fixed; top:0; left:0; width:100%; height:100%;">
+        <div class="modal-content card" style="max-width:400px; width:95%; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-white);">
+                <h3 style="margin: 0; display:flex; align-items:center; gap:0.5rem;"><i class="fas fa-lock text-primary"></i> Set New Password</h3>
+                <span class="close" onclick="document.getElementById('resetPasswordModal').style.display='none'" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div style="padding: 1.5rem; background: var(--bg-light);">
+                <div class="mb-3">
+                    <label>New Password</label>
+                    <input type="password" id="newResetPassword" class="form-control" required style="margin-top:0.25rem;">
+                </div>
+                <div class="mb-3">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmResetPassword" class="form-control" required style="margin-top:0.25rem;">
+                </div>
+                <button class="btn btn-primary" onclick="submitNewPassword()" style="width:100%;" id="submitNewPassBtn">Reset Password</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

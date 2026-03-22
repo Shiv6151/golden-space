@@ -239,7 +239,7 @@ function renderRichPostPreview(container, postId) {
     })
     .catch(err => {
         console.error('Error loading rich post preview for ID ' + postId + ':', err);
-        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border: 1px dashed var(--border-color); border-radius:12px;"><i class="fas fa-exclamation-circle text-warning"></i> Post not available</div>';
+        container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border: 1px dashed var(--border-color); border-radius:12px; background: var(--bg-light);"><i class="fas fa-trash-alt text-danger" style="margin-right:4px;"></i> Post deleted by the owner</div>';
     });
 }
 

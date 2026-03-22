@@ -12,7 +12,7 @@ public class SkillDAO {
 
     public List<Skill> searchSkills(String query) {
         List<Skill> skills = new ArrayList<>();
-        String sql = "SELECT * FROM Skills WHERE name LIKE ? LIMIT 10";
+        String sql = "SELECT * FROM Skills WHERE LOWER(name) LIKE LOWER(?) LIMIT 10";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, "%" + query + "%");

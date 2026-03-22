@@ -182,16 +182,22 @@
             justify-content: flex-end;
         }
         .reaction-item {
-            background: var(--bg-white);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 2px 6px;
-            font-size: 0.75rem;
+            font-size: 1.15rem;
             cursor: pointer;
+            border-radius: 12px;
+            padding: 2px 4px;
             display: flex;
             align-items: center;
             gap: 2px;
-            box-shadow: var(--shadow-xs);
+            background: transparent;
+            border: none;
+            transition: transform 0.2s;
+        }
+        .reaction-item:hover {
+            transform: scale(1.1);
+        }
+        .reaction-item .count {
+            display: none;
         }
         .emoji-picker-popup {
             display: none;
@@ -671,10 +677,10 @@
                                                 <div class="msg-time local-time-convert" data-time="${msg.messageTime.time}" data-format="time">
                                                     <i class="fas fa-clock fa-spin" style="font-size:8px;"></i>
                                                 </div>
-                                                <c:if test="${msg.senderId == sessionScope.user.userId}">
+                                                <c:if test="${msg.senderId == sessionScope.user.userId && loop.last}">
                                                     <c:choose>
-                                                        <c:when test="${msg.read}"><i class="fas fa-check-double" style="font-size:10px; color:inherit; opacity:0.9;" title="Seen"></i></c:when>
-                                                        <c:otherwise><i class="fas fa-check" style="font-size:10px; color:inherit; opacity:0.7;" title="Sent"></i></c:otherwise>
+                                                        <c:when test="${msg.read}"><span style="font-size:0.7rem; color:inherit; opacity:0.6; margin-left:2px;">Seen</span></c:when>
+                                                        <c:otherwise><span style="font-size:0.7rem; color:inherit; opacity:0.6; margin-left:2px;">Sent</span></c:otherwise>
                                                     </c:choose>
                                                 </c:if>
                                             </div>
@@ -706,14 +712,10 @@
                                         </div>
                                         
                                         <!-- Emoji Picker -->
-                                        <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup" style="display:none; position:absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:white; border-radius:30px; padding:8px 16px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '❤️', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">❤️</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '🔥', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🔥</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😂', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😂</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😮', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😮</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '👏', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">👏</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '🙌', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🙌</span>
-                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😢', event)" style="cursor:pointer; font-size:1.2rem;">😢</span>
+                                        <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup" style="display:none; position:absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;">
+                                            <c:forTokens items="❤️,🔥,😂,😮,👏,🙌,😢,👍,👎,😀,😃,😄,😁,😆,😅,🤣,🥲,☺️,😊,😇,🙂,🙃,😉,😌,😍,🥰,😘,😗,😙,😚,😋,😛,😝,😜,🤪,🤨,🧐,🤓,😎,🥸,🤩,🥳,😏,😒,😞,😔,😟,😕,🙁,☹️,😣,😖,😫,😩,🥺,😭,😤,😠,😡,🤬,🤯,😳,🥵,🥶,😱,😨,😰,😥,😓,👋,🤚,🖐,✋,🖖,👌,🤌,🤏,✌️,🤞,🤟,🤘,🤙,👈,👉,👆,🖕,👇,☝️,✊,👊,🤛,🤜,👐,🤲,🤝,🙏,✨,💯" delims="," var="emoji">
+                                                <span onclick="toggleMessageReaction('${msg.messageId}', '${emoji}', event)" style="cursor:pointer; font-size:1.4rem; text-align:center; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">${emoji}</span>
+                                            </c:forTokens>
                                         </div>
                                     </div>
                                     <c:set var="lastMsgId" value="${msg.messageId}" />
@@ -961,10 +963,17 @@
                                      ontouchend="cancelLongPress()" 
                                      style="margin-bottom: 0px; max-width: 80%; width: fit-content; cursor: pointer; user-select: none; -webkit-user-select: none;">
                                     \${attachmentHtml}
-                                    \${msg.text}
+                                    \${msg.text.includes('[POST_SHARE:') ? msg.text.replace(/\\[POST_SHARE:(\\d+)\\]/g, function(match, p1) {
+                                        const cId = 'poll-post-' + msg.id + '-' + p1;
+                                        setTimeout(function() {
+                                            if(typeof renderRichPostPreview === 'function') {
+                                                renderRichPostPreview(document.getElementById(cId), p1);
+                                            }
+                                        }, 100);
+                                        return '<div id="' + cId + '" style="min-height:100px; display:flex; align-items:center; justify-content:center; padding:1rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-light); margin-top:0.5rem;"><i class="fas fa-spinner fa-spin text-muted" style="font-size:1.5rem;"></i><span style="margin-left:8px; font-size:0.85rem; color:var(--text-muted);">Loading Shared Post...</span></div>';
+                                    }) : msg.text}
                                     <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:4px;">
                                         <div class="msg-time local-time-convert" data-time="\${msg.time}" data-format="time"></div>
-                                        \${isSender ? (msg.read ? '<i class="fas fa-check-double" style="font-size:10px; color:#3b82f6;" title="Seen"></i>' : '<i class="fas fa-check" style="font-size:10px; color:var(--text-muted);" title="Sent"></i>') : ''}
                                     </div>
                                     <div id="msg-reactions-\${msg.id}" class="msg-reactions"></div>
                                 </div>
@@ -986,14 +995,10 @@
                                     </div>
                                 </div>
                                 
-                                <div id="emoji-picker-\${msg.id}" class="emoji-picker-popup" style="display:none; position:absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:white; border-radius:30px; padding:8px 16px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '❤️', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">❤️</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '🔥', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🔥</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '😂', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😂</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '😮', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😮</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '👏', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">👏</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '🙌', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🙌</span>
-                                    <span onclick="toggleMessageReaction('\${msg.id}', '😢', event)" style="cursor:pointer; font-size:1.2rem;">😢</span>
+                                <div id="emoji-picker-\${msg.id}" class="emoji-picker-popup" style="display:none; position:absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:var(--bg-white); border:1px solid var(--border-color); border-radius:12px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); width: 260px; max-height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;">
+                                    \${"❤️,🔥,😂,😮,👏,🙌,😢,👍,👎,😀,😃,😄,😁,😆,😅,🤣,🥲,☺️,😊,😇,🙂,🙃,😉,😌,😍,🥰,😘,😗,😙,😚,😋,😛,😝,😜,🤪,🤨,🧐,🤓,😎,🥸,🤩,🥳,😏,😒,😞,😔,😟,😕,🙁,☹️,😣,😖,😫,😩,🥺,😭,😤,😠,😡,🤬,🤯,😳,🥵,🥶,😱,😨,😰,😥,😓,👋,🤚,🖐,✋,🖖,👌,🤌,🤏,✌️,🤞,🤟,🤘,🤙,👈,👉,👆,🖕,👇,☝️,✊,👊,🤛,🤜,👐,🤲,🤝,🙏,✨,💯".split(',').map(emoji => 
+                                        '<span onclick="toggleMessageReaction(\\''+msg.id+'\\', \\''+emoji+'\\', event)" style="cursor:pointer; font-size:1.4rem; text-align:center; transition:transform 0.1s;" onmouseover="this.style.transform=\\'scale(1.2)\\'" onmouseout="this.style.transform=\\'scale(1)\\'">'+emoji+'</span>'
+                                    ).join('')}
                                 </div>
                             `;
                             chatWindow.insertBefore(div, typingIndicator);
@@ -1073,12 +1078,7 @@
             { id: "dark", name: "Dark Mode", bg: "#1f2937", sent: "#3b82f6", received: "#374151", sentText: "white", receivedText: "#f3f4f6" },
             { id: "ocean", name: "Ocean Blue", bg: "linear-gradient(to right, #00c6ff, #0072ff)", sent: "rgba(255,255,255,0.9)", received: "rgba(0,0,0,0.6)", sentText: "#0072ff", receivedText: "white" },
             { id: "sunset", name: "Sunset Orange", bg: "linear-gradient(to top, #ff7e5f, #feb47b)", sent: "#ff512f", received: "#fff", sentText: "white", receivedText: "#333" },
-            { id: "forest", name: "Forest Green", bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", sent: "#15803d", received: "#fff", sentText: "white", receivedText: "#15803d" },
-            { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" },
-            { id: "cherry", name: "Cherry Blossom", bg: "linear-gradient(to top, #ff0844 0%, #ffb199 100%)", sent: "#e11d48", received: "#ffe4e6", sentText: "white", receivedText: "#881337" },
-            { id: "midnight", name: "Midnight City", bg: "linear-gradient(to top, #0f2027, #203a43, #2c5364)", sent: "#06b6d4", received: "rgba(255,255,255,0.1)", sentText: "white", receivedText: "white" },
-            { id: "neon", name: "Neon Vibes", bg: "#000000", sent: "#ff00ff", received: "#00ffff", sentText: "white", receivedText: "black" },
-            { id: "coffee", name: "Coffee Warm", bg: "#dfd2c0", sent: "#8b5a2b", received: "#fff8dc", sentText: "white", receivedText: "#4a3b2c" }
+            { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" }
         ];
 
         function applyTheme(themeId) {

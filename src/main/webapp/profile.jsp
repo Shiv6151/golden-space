@@ -222,7 +222,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-outline btn-sm" onclick="openViewersModal()">See who viewed</button>
+                        <button class="btn btn-outline btn-sm" onclick="openViewersModal()" style="min-width: 150px; width: auto !important; white-space: nowrap; font-weight: 600;"><i class="fas fa-eye"></i> See who viewed</button>
                     </div>
                 </div>
             </div>
@@ -272,7 +272,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Experience</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-primary btn-sm" onclick="openAddExperienceModal()" style="min-width: 120px; width: auto !important; white-space: nowrap;"><i class="fas fa-plus"></i> Add Experience</button>
+                        <button class="btn btn-outline btn-sm" onclick="openAddExperienceModal()" style="min-width: 150px; width: auto !important; white-space: nowrap; font-weight: 600;"><i class="fas fa-plus"></i> Add Experience</button>
                     </c:if>
                 </div>
                 <div id="experience-list">
@@ -320,7 +320,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <h3 style="margin: 0;">Education</h3>
                     <c:if test="${isSelf}">
-                        <button class="btn btn-outline btn-sm" onclick="openAddEducationModal()" style="min-width: 120px; width: auto !important; white-space: nowrap;"><i class="fas fa-plus"></i> Add Education</button>
+                        <button class="btn btn-outline btn-sm" onclick="openAddEducationModal()" style="min-width: 150px; width: auto !important; white-space: nowrap; font-weight: 600;"><i class="fas fa-plus"></i> Add Education</button>
                     </c:if>
                 </div>
                 <div id="education-list">

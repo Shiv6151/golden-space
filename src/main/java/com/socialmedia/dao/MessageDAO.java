@@ -176,24 +176,37 @@ public class MessageDAO {
     }
 
     public boolean toggleMessageReaction(int messageId, int userId, String emoji) {
-        String checkQuery = "SELECT * FROM MessageReactions WHERE message_id = ? AND user_id = ? AND emoji_code = ?";
+        String checkQuery = "SELECT emoji_code FROM MessageReactions WHERE message_id = ? AND user_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
             checkStmt.setInt(1, messageId);
             checkStmt.setInt(2, userId);
-            checkStmt.setString(3, emoji);
             ResultSet rs = checkStmt.executeQuery();
             
             if (rs.next()) {
-                String deleteQuery = "DELETE FROM MessageReactions WHERE message_id = ? AND user_id = ? AND emoji_code = ?";
-                try (PreparedStatement delStmt = conn.prepareStatement(deleteQuery)) {
-                    delStmt.setInt(1, messageId);
-                    delStmt.setInt(2, userId);
-                    delStmt.setString(3, emoji);
-                    delStmt.executeUpdate();
+                String existingEmoji = rs.getString("emoji_code");
+                if (existingEmoji.equals(emoji)) {
+                    // Same emoji: toggle off
+                    String deleteQuery = "DELETE FROM MessageReactions WHERE message_id = ? AND user_id = ?";
+                    try (PreparedStatement delStmt = conn.prepareStatement(deleteQuery)) {
+                        delStmt.setInt(1, messageId);
+                        delStmt.setInt(2, userId);
+                        delStmt.executeUpdate();
+                    }
+                    return false;
+                } else {
+                    // Different emoji: update to new emoji
+                    String updateQuery = "UPDATE MessageReactions SET emoji_code = ? WHERE message_id = ? AND user_id = ?";
+                    try (PreparedStatement updStmt = conn.prepareStatement(updateQuery)) {
+                        updStmt.setString(1, emoji);
+                        updStmt.setInt(2, messageId);
+                        updStmt.setInt(3, userId);
+                        updStmt.executeUpdate();
+                    }
+                    return true;
                 }
-                return false;
             } else {
+                // No existing reaction: insert it
                 String insertQuery = "INSERT INTO MessageReactions (message_id, user_id, emoji_code) VALUES (?, ?, ?)";
                 try (PreparedStatement insStmt = conn.prepareStatement(insertQuery)) {
                     insStmt.setInt(1, messageId);

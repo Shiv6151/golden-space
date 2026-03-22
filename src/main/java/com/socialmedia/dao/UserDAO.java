@@ -175,7 +175,7 @@ public class UserDAO {
         String query = "SELECT u.*, " +
                        "(SELECT 1 FROM followers WHERE follower_id = ? AND following_id = u.user_id) AS is_followed " +
                        "FROM Users u " +
-                       "WHERE u.name LIKE ? OR u.username LIKE ?";
+                       "WHERE LOWER(u.name) LIKE LOWER(?) OR LOWER(u.username) LIKE LOWER(?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
