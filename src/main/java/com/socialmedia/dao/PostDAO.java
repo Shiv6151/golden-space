@@ -131,7 +131,7 @@ public class PostDAO {
             "FROM Posts p " +
             "JOIN Users u ON p.user_id = u.user_id " +
             "WHERE u.is_private = 0 OR p.user_id = ? " +
-            "ORDER BY p.post_date DESC";
+            "ORDER BY p.post_date DESC LIMIT 25";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -158,7 +158,7 @@ public class PostDAO {
             "AS is_liked_by_me " +
             "FROM Posts p " +
             "JOIN Users u ON p.user_id = u.user_id " +
-            "WHERE p.user_id = ? ORDER BY p.is_pinned DESC, p.post_date DESC";
+            "WHERE p.user_id = ? ORDER BY p.is_pinned DESC, p.post_date DESC LIMIT 25";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {

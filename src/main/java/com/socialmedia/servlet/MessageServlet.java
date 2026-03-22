@@ -102,8 +102,17 @@ public class MessageServlet extends HttpServlet {
                 int lastId = Integer.parseInt(lastIdParam);
                 List<Message> newMessages = messageDAO.getNewMessages(currentUser.getUserId(), chatUserId, lastId);
                 
+                // Track typing status
+                boolean isTyping = false;
+                Long lastTyped = (Long) getServletContext().getAttribute("typing_" + chatUserId + "_to_" + currentUser.getUserId());
+                if (lastTyped != null && (System.currentTimeMillis() - lastTyped < 3000)) {
+                    isTyping = true;
+                }
+                
                 response.setContentType("application/json");
-                StringBuilder json = new StringBuilder("[");
+                StringBuilder json = new StringBuilder("{");
+                json.append("\"isTyping\":").append(isTyping).append(",");
+                json.append("\"messages\":[");
                 for (int i = 0; i < newMessages.size(); i++) {
                     Message m = newMessages.get(i);
                     String attachUrl = m.getAttachmentUrl() != null ? "\"" + m.getAttachmentUrl() + "\"" : "null";
@@ -116,11 +125,11 @@ public class MessageServlet extends HttpServlet {
                         .append("\"text\":\"").append(text).append("\",")
                         .append("\"attachmentUrl\":").append(attachUrl).append(",")
                         .append("\"attachmentType\":").append(attachType).append(",")
-                        .append("\"time\":\"").append(m.getMessageTime()).append("\"")
+                        .append("\"time\":\"").append(m.getMessageTime().getTime()).append("\"")
                         .append("}");
                     if (i < newMessages.size() - 1) json.append(",");
                 }
-                json.append("]");
+                json.append("]}");
                 response.getWriter().write(json.toString());
                 return;
             } catch (Exception e) {
@@ -150,11 +159,29 @@ public class MessageServlet extends HttpServlet {
             messageDAO.clearConversation(currentUser.getUserId(), otherUserId);
             response.sendRedirect("MessageServlet?with=" + otherUserId);
             return;
+        } else if ("typing".equals(action)) {
+            try {
+                int otherUserId = Integer.parseInt(request.getParameter("withUserId"));
+                getServletContext().setAttribute("typing_" + currentUser.getUserId() + "_to_" + otherUserId, System.currentTimeMillis());
+                response.setStatus(200);
+            } catch (Exception e) {
+                response.setStatus(500);
+            }
+            return;
         } else if ("deleteMessage".equals(action)) {
             int messageId = Integer.parseInt(request.getParameter("messageId"));
             int withUserId = Integer.parseInt(request.getParameter("withUserId"));
             messageDAO.deleteMessage(messageId, currentUser.getUserId());
             response.sendRedirect("MessageServlet?with=" + withUserId);
+            return;
+        } else if ("markViewOnce".equals(action)) {
+            try {
+                int messageId = Integer.parseInt(request.getParameter("messageId"));
+                messageDAO.markViewOnceViewed(messageId);
+                response.setStatus(200);
+            } catch (Exception e) {
+                response.setStatus(500);
+            }
             return;
         }
 
@@ -182,6 +209,16 @@ public class MessageServlet extends HttpServlet {
                     else if (contentType.startsWith("video/")) type = "video";
                     else if (contentType.equals("application/pdf")) type = "pdf";
                 }
+                
+                jakarta.servlet.http.Part viewOncePart = null;
+                try { viewOncePart = request.getPart("viewOnce"); } catch(Exception e) {}
+                if (viewOncePart != null && type.equals("image")) {
+                    java.util.Scanner s = new java.util.Scanner(viewOncePart.getInputStream());
+                    if (s.hasNextLine() && "on".equals(s.nextLine().trim())) {
+                        type = "image_view_once";
+                    }
+                }
+                
                 String url = com.socialmedia.util.CloudinaryUtil.upload(filePart);
                 if (url != null) {
                     msg.setAttachmentUrl(url);

@@ -123,13 +123,19 @@
     <jsp:include page="components/navbar.jsp" />
 
     <div class="main-container">
-        <!-- Instagram Style Profile Header Section -->
-        <div class="ig-profile-header">
+        <!-- Elevated Premium Profile Header Section -->
+        <div class="ig-profile-header" style="position: relative; background: var(--bg-white); border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); padding: 3rem 2.5rem; border: 1px solid rgba(0,0,0,0.05); margin-bottom: 2rem;">
+            <c:if test="${isSelf}">
+                <a href="settings.jsp" style="position: absolute; top: 1.5rem; right: 1.5rem; color: var(--text-muted); font-size: 1.4rem; transition: all 0.2s; text-decoration: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-light);" onmouseover="this.style.color='var(--primary-color)'; this.style.transform='rotate(45deg)';" onmouseout="this.style.color='var(--text-muted)'; this.style.transform='rotate(0)';" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </a>
+            </c:if>
             <div class="ig-avatar-section">
                 <img src="${profileUser.profilePhoto != null && (profileUser.profilePhoto.startsWith('http') || profileUser.profilePhoto.startsWith('data:')) ? profileUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(profileUser.profilePhoto != null ? profileUser.profilePhoto : 'images/default-avatar.png')}" 
                      class="ig-avatar clickable" alt="${profileUser.name}"
-                     onclick="showProfilePhoto(this.src)">
-                <h2 class="ig-username" style="margin-top: 1rem;">
+                     onclick="showProfilePhoto(this.src)"
+                     style="width: 150px; height: 150px; border: 4px solid var(--bg-white); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h2 class="ig-username" style="margin-top: 1.5rem; font-weight: 700; color: var(--text-main); font-size: 1.5rem;">
                     ${profileUser.username}
                     <c:if test="${not isSelf && connectionDegree != null}">
                         <span class="connection-degree" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-left: 0.25rem;">
@@ -153,28 +159,25 @@
                     <div class="ig-joined-date" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><i class="far fa-calendar-alt"></i> Joined <fmt:formatDate value="${profileUser.createdAt}" pattern="MMMM yyyy" /></div>
                 </div>
 
-                <div class="ig-stats-row">
-                    <div class="ig-stat">
-                        <strong>${postCount != null ? postCount : 0}</strong>
-                        <span>posts</span>
+                <div class="ig-stats-row" style="margin: 1.5rem 0; padding: 1.5rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                    <div class="ig-stat" style="transition: all 0.2s; border-radius: 12px; padding: 0.5rem; cursor: default;">
+                        <strong style="font-size: 1.25rem; color: var(--text-main);">${postCount != null ? postCount : 0}</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">posts</span>
                     </div>
-                    <div class="ig-stat" onclick="handleFollowClick('followers', '${profileUser.userId}', '${canSeePosts != null ? canSeePosts : false}')">
-                        <strong id="followers-count">${followersCount != null ? followersCount : 0}</strong>
-                        <span>followers</span>
+                    <div class="ig-stat" onclick="handleFollowClick('followers', '${profileUser.userId}', '${canSeePosts != null ? canSeePosts : false}')" style="transition: all 0.2s; border-radius: 12px; padding: 0.5rem;">
+                        <strong id="followers-count" style="font-size: 1.25rem; color: var(--text-main);">${followersCount != null ? followersCount : 0}</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">followers</span>
                     </div>
-                    <div class="ig-stat" onclick="handleFollowClick('following', '${profileUser.userId}', '${canSeePosts != null ? canSeePosts : false}')">
-                        <strong id="following-count">${followingCount != null ? followingCount : 0}</strong>
-                        <span>following</span>
+                    <div class="ig-stat" onclick="handleFollowClick('following', '${profileUser.userId}', '${canSeePosts != null ? canSeePosts : false}')" style="transition: all 0.2s; border-radius: 12px; padding: 0.5rem;">
+                        <strong id="following-count" style="font-size: 1.25rem; color: var(--text-main);">${followingCount != null ? followingCount : 0}</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">following</span>
                     </div>
                 </div>
 
                 <div class="ig-user-row">
                     <c:choose>
                         <c:when test="${isSelf}">
-                            <div style="display:flex; gap:0.5rem; width: 100%;">
-                                <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="toggleEditModal()">Edit Profile</button>
-                                <button class="action-btn" onclick="toggleSettingsModal()" title="Settings" style="padding:8px; display: flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer;"><i class="fas fa-cog fa-lg"></i></button>
-                            </div>
+                            <!-- Removed Edit Profile Button per user request -->
                         </c:when>
                         <c:otherwise>
                             <div style="display:flex; gap:0.5rem; width: 100%;">
@@ -541,14 +544,6 @@
                         <span id="modal-comment-count-text">0 Comments</span>
                     </div>
 
-                    <div class="emoji-bar" style="display:flex; justify-content:space-around; padding: 0.5rem; background: var(--bg-light); border-radius: 8px; margin-bottom: 0.5rem;">
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '❤️')" style="cursor:pointer; font-size:1.2rem;" title="Heart">❤️</span>
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '🔥')" style="cursor:pointer; font-size:1.2rem;" title="Fire">🔥</span>
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '😂')" style="cursor:pointer; font-size:1.2rem;" title="Laugh">😂</span>
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '😮')" style="cursor:pointer; font-size:1.2rem;" title="Wow">😮</span>
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '👏')" style="cursor:pointer; font-size:1.2rem;" title="Clap">👏</span>
-                        <span onclick="toggleReaction(window.currentModalPost.postId, '🙌')" style="cursor:pointer; font-size:1.2rem;" title="Hands Up">🙌</span>
-                    </div>
                     <div class="post-actions border-top" style="display:flex; justify-content:space-between; padding: 0.75rem 0;">
                         <button class="action-btn" id="modal-like-btn" onclick="" style="flex:1;"><i class="far fa-heart"></i> Like</button>
                         <button class="action-btn" onclick="document.getElementById('modal-comment-input').focus()" style="flex:1;"><i class="far fa-comment"></i> Comment</button>
@@ -649,95 +644,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content card" style="max-width:420px; padding:0; overflow:hidden; border-radius:16px;">
-            <!-- Header -->
-            <div style="background: linear-gradient(135deg, var(--primary-color), #ff6b81); padding: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                    <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:white; font-size:1.1rem;">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <h2 style="margin:0; font-size:1.25rem; color:white; font-weight:700;">Settings</h2>
-                </div>
-                <button onclick="toggleSettingsModal()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
-            </div>
-
-            <div style="padding:1.25rem; display:flex; flex-direction:column; gap:0.5rem;">
-                <!-- Dark Mode -->
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:var(--primary-color); display:flex; align-items:center; justify-content:center; color:white;">
-                            <i class="fas fa-moon"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:600; font-size:0.95rem;">Dark Mode</div>
-                            <small id="themeStatus" class="text-muted">Off</small>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="themeToggle" onchange="ThemeManager.toggle()">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-
-                <!-- Privacy -->
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:#6c63ff; display:flex; align-items:center; justify-content:center; color:white;">
-                            <i class="fas fa-lock"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:600; font-size:0.95rem;">Private Account</div>
-                            <small id="privacyStatus" class="text-muted">${profileUser.privateAccount ? "Private" : "Public"}</small>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="privacyToggle" ${profileUser.privateAccount ? "checked" : ""} onchange="updatePrivacy(this.checked)">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-
-                <!-- Change Password -->
-                <div style="padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px;">
-                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:#00b894; display:flex; align-items:center; justify-content:center; color:white;">
-                            <i class="fas fa-key"></i>
-                        </div>
-                        <div style="font-weight:600; font-size:0.95rem;">Change Password</div>
-                    </div>
-                    <form id="passwordForm" onsubmit="updatePassword(event)">
-                        <input type="password" id="currentPassword" placeholder="Current Password" class="form-input" style="margin-bottom:0.5rem;" required>
-                        <input type="password" id="newPassword" placeholder="New Password" class="form-input" style="margin-bottom:0.5rem;" required>
-                        <button type="submit" style="width:100%; padding:0.6rem; background:linear-gradient(135deg,var(--primary-color),#ff6b81); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; font-family:inherit;">Update Password</button>
-                    </form>
-                    <div id="passwordMessage" style="font-size:0.8rem; margin-top:0.3rem;"></div>
-                </div>
-
-                <!-- Logout -->
-                <button type="button" onclick="confirmLogout()" style="display:flex; align-items:center; gap:0.75rem; padding:0.9rem 1rem; background:var(--bg-light); border-radius:12px; border:none; cursor:pointer; width:100%; text-align:left; color:var(--text-main);">
-                    <div style="width:36px; height:36px; border-radius:10px; background:#fdcb6e; display:flex; align-items:center; justify-content:center; color:white;">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </div>
-                    <span style="font-weight:600; font-size:0.95rem;">Logout</span>
-                </button>
-
-                <!-- Danger Zone: Delete Account -->
-                <div style="margin-top:0.5rem; border:2px solid var(--danger-color); border-radius:12px; padding:0.9rem 1rem; background:rgba(255,71,87,0.04);">
-                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem; color:var(--danger-color); font-weight:700; font-size:0.85rem;">
-                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
-                    </div>
-                    <form action="DeleteAccountServlet" method="POST" onsubmit="return confirm('⚠️ This will permanently delete your account, all posts, and messages. This CANNOT be undone. Are you sure?');">
-                        <button type="submit" style="width:100%; padding:0.65rem; background:#ff3547; color:#ffffff !important; border:2px solid #cc0000; border-radius:8px; cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-size:0.9rem; letter-spacing:0.02em;">
-                            <i class="fas fa-user-slash"></i> ⚠ Delete Account Permanently
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    </c:if>
-    
     <!-- Follow Modal (Global) -->
     <div id="followModal" class="modal">
         <div class="modal-content card" style="max-width:400px;">
@@ -848,7 +754,7 @@
                         <label class="form-label">End Date</label>
                         <input type="date" name="endDate" class="form-input" id="exp-end-date">
                         <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; font-size:0.85rem;">
-                            <input type="checkbox" name="isCurrent" id="expIsCurrent" onchange="document.getElementById('exp-end-date').disabled = this.checked"> I currently work here
+                            <input type="checkbox" name="isCurrent" id="expIsCurrent" value="true" onchange="document.getElementById('exp-end-date').disabled = this.checked"> I currently work here
                         </label>
                     </div>
                 </div>
@@ -972,13 +878,7 @@
     </div>
     <script>
         window.contextPath = '${pageContext.request.contextPath}';
-        window.loggedInUserId = '${sessionScope.user.userId}';
         window.currentProfileUserId = '${profileUser.userId}';
-
-        function toggleEditModal() {
-            const modal = document.getElementById('editProfileModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-        }
 
         // Connect JS
         function openConnectModal() {
@@ -1014,11 +914,6 @@
                     closeConnectModal();
                 } else alert("Failed to send request.");
             });
-        }
-
-        function toggleSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            if(modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
         }
 
         function previewAvatar(input) {

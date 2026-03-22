@@ -2,7 +2,7 @@
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <div class="card post-card">
-    <div class="post-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div class="post-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
         <div style="display:flex; gap:1rem; align-items:center;">
             <c:choose>
                 <c:when test="${not empty post.userPhoto}">

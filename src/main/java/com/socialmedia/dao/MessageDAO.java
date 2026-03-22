@@ -224,4 +224,15 @@ public class MessageDAO {
         }
         return reactions;
     }
+    
+    public void markViewOnceViewed(int messageId) {
+        String query = "UPDATE Messages SET attachment_type = 'image_viewed', attachment_url = NULL WHERE message_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, messageId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

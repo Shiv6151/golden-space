@@ -180,7 +180,7 @@
     
     document.addEventListener('DOMContentLoaded', function() {
         checkPendingRequests();
-        setInterval(checkPendingRequests, 15000);
+        setInterval(checkPendingRequests, 30000); // Relaxed to 30 seconds for better performance
     });
 </script>
 

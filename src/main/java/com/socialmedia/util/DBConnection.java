@@ -33,6 +33,22 @@ public class DBConnection {
             
             dataSource = new HikariDataSource(config);
             System.out.println("HikariCP Database Connection Pool initialized.");
+            
+            // Auto-migrate tables
+            try (Connection conn = dataSource.getConnection();
+                 java.sql.Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate("CREATE TABLE IF NOT EXISTS blocked_users (" +
+                         "    id INT AUTO_INCREMENT PRIMARY KEY," +
+                         "    blocker_id INT NOT NULL," +
+                         "    blocked_id INT NOT NULL," +
+                         "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                         "    FOREIGN KEY (blocker_id) REFERENCES Users(user_id) ON DELETE CASCADE," +
+                         "    FOREIGN KEY (blocked_id) REFERENCES Users(user_id) ON DELETE CASCADE," +
+                         "    UNIQUE KEY unique_block (blocker_id, blocked_id)" +
+                         ")");
+            } catch (Exception ex) {
+                System.err.println("Failed to auto-migrate schema: " + ex.getMessage());
+            }
         } catch (Exception e) {
             System.err.println("Fatal Error: Could not initialize database connection pool.");
             e.printStackTrace();

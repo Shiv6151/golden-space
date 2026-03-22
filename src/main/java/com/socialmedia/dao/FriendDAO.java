@@ -182,4 +182,32 @@ public class FriendDAO {
         }
         return "NONE";
     }
+
+    public boolean blockUser(int blockerId, int blockedId) {
+        // First delete any existing friend request or follow connection
+        deleteFriendRequest(blockerId, blockedId);
+        String sql = "INSERT IGNORE INTO blocked_users (blocker_id, blocked_id) VALUES (?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean unblockUser(int blockerId, int blockedId) {
+        String sql = "DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

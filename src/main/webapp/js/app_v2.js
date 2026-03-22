@@ -655,7 +655,7 @@ function showPostDetail(postId) {
         // Modal Post Options (Menu)
         const modalOptions = document.getElementById('modal-post-options');
         if (modalOptions) {
-            if (window.loggedInUserId === post.userId) {
+            if (window.loggedInUserId == post.userId) {
                 modalOptions.innerHTML = `
                     <div class="dropdown" style="position:relative;">
                         <button class="action-btn text-muted" onclick="togglePostMenu(${post.postId}, event)" style="border:none;background:none; cursor:pointer; padding: 0.5rem;">
@@ -1677,3 +1677,26 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(pollLikeCounts, 30000);
     }
 });
+
+// ============================================================
+// BLOCK USER FUNCTIONALITY
+// ============================================================
+function blockUserConfirm(userId) {
+    if (confirm("Are you sure you want to block this user? They will no longer be able to message you or view your posts.")) {
+        fetch((window.contextPath || '') + '/FriendServlet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=block&friendId=' + userId
+        }).then(res => res.text()).then(data => {
+            if (data === 'success') {
+                alert("User blocked successfully.");
+                window.location.href = (window.contextPath || '') + '/feed.jsp';
+            } else {
+                alert("Failed to block user.");
+            }
+        }).catch(err => {
+            console.error("Error blocking user:", err);
+            alert("Network error while trying to block user.");
+        });
+    }
+}

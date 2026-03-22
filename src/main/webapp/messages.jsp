@@ -318,29 +318,19 @@
                 height: auto !important;
             }
             .chat-layout {
-                flex-direction: row;
-                height: calc(100vh - 60px);
+                flex-direction: column;
+                height: 100vh;
+                margin-top: 60px; /* Account for navbar */
                 max-width: 100vw;
-                overflow: hidden;
-                position: fixed; /* Fix for mobile layout shifting */
-                top: 60px;
-                left: 0;
-                right: 0;
-                bottom: 0;
             }
             .chat-sidebar {
-                position: absolute;
-                top: 0; left: 0;
                 width: 100%;
-                height: 100%;
                 z-index: 100;
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-right: none;
                 background: var(--bg-white);
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto !important;
-                -webkit-overflow-scrolling: touch;
             }
             .friend-item {
                 padding: 0.85rem 1rem !important;
@@ -362,22 +352,16 @@
                 opacity: 1 !important;
             }
             .chat-main {
-                position: absolute;
-                top: 0; left: 0;
+                display: none; /* Hidden by default */
                 width: 100%;
-                height: 100%;
-                z-index: 50;
-                transform: translateX(100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex;
-                flex-direction: column;
+                height: 100vh;
+                background: var(--bg-light);
             }
             body.chat-open .chat-sidebar {
-                transform: translateX(-100%);
+                display: none; /* Hide sidebar completely when chatting */
             }
             body.chat-open .chat-main {
-                transform: translateX(0);
-                z-index: 200;
+                display: flex; /* Show chat */
             }
             body.chat-open.sidebar-active .chat-sidebar {
                 transform: translateX(0);
@@ -413,6 +397,18 @@
                 padding: 1rem 1rem !important;
             }
         }
+        .msg-reactions {
+            position: absolute;
+            bottom: -10px;
+            right: 5px;
+            display: flex;
+            gap: 2px;
+            background: var(--bg-white);
+            padding: 2px 4px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
     </style>
 </head>
 <body style="background-color: var(--bg-light); margin: 0; height: 100vh; overflow: hidden;">
@@ -444,6 +440,16 @@
             <div class="chat-sidebar-header">
                 Chats
             </div>
+            
+            <a href="MessageServlet?with=${sessionScope.user.userId}" class="friend-item ${sessionScope.user.userId == chatUser.userId ? 'active' : ''}" style="border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem; position: relative;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light, #e0e7ff); display: flex; align-items: center; justify-content: center; color: var(--primary-color); border: 1px solid var(--border-color); flex-shrink: 0;">
+                    <i class="fas fa-bookmark" style="font-size: 1.2rem;"></i>
+                </div>
+                <div style="flex: 1; margin-left: 12px; min-width: 0;">
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Message Yourself</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Save messages & files</div>
+                </div>
+            </a>
             
             <c:if test="${empty friends}">
                 <div class="p-4 text-muted text-center">
@@ -495,19 +501,43 @@
                                 <i class="fas fa-arrow-left"></i>
                             </button>
                             <img src="${chatUser.profilePhoto != null && chatUser.profilePhoto.startsWith('http') ? chatUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(chatUser.profilePhoto != null ? chatUser.profilePhoto : 'images/default-avatar.png')}" class="post-avatar">
-                            <h3 style="margin: 0;"><a href="ProfileServlet?id=${chatUser.userId}" style="color: inherit;">${chatUser.name}</a></h3>
+                            <h3 style="margin: 0;"><a href="#" onclick="openSharedMediaModal(); return false;" style="color: inherit;" title="View Shared Media">${chatUser.name}</a></h3>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <!-- Change Background Button -->
+                            <button id="changeChatBgBtn" class="btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px;" title="Change Background">
+                                <i class="fas fa-image" style="font-size: 1.2rem;"></i>
+                            </button>
+                            <input type="file" id="chatBgInput" accept="image/*" style="display:none">
+                            
                             <button id="startVideoCallBtn" class="btn" style="background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 8px;" title="Video Call">
                                 <i class="fas fa-video" style="font-size: 1.2rem;"></i>
                             </button>
-                            <form action="MessageServlet" method="POST" onsubmit="return confirm('Clear chat history for you? The other user will still see the conversation.');">
-                                <input type="hidden" name="action" value="clearChat">
-                                <input type="hidden" name="otherUserId" value="${chatUser.userId}">
-                                <button type="submit" class="btn text-danger" style="background: none; border: none; cursor: pointer; padding: 8px;" title="Clear Chat">
-                                    <i class="fas fa-trash-alt"></i>
+                            
+                            <!-- 3-dots Menu for clear chat etc -->
+                            <div style="position: relative;">
+                                <button type="button" class="btn" onclick="toggleChatHeaderMenu(event)" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+                                    <i class="fas fa-ellipsis-v" style="font-size: 1.2rem;"></i>
                                 </button>
-                            </form>
+                                <div id="chatHeaderMenu" class="msg-dropdown-menu" style="display:none; position:absolute; right:0; top:45px; background:var(--bg-white); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); border:1px solid var(--border-color); padding:0.5rem 0; min-width:200px; z-index:200;">
+                                    <div class="dropdown-item" onclick="document.getElementById('chatThemeModal').style.display='flex'; document.getElementById('chatHeaderMenu').style.display='none';" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-palette" style="width: 24px; color:var(--primary-color);"></i> Change Theme
+                                    </div>
+                                    <div class="dropdown-item" onclick="goToFirstMessage()" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-arrow-up" style="width: 24px; color:#10b981;"></i> Go to First Message
+                                    </div>
+                                    <div class="dropdown-item text-danger" onclick="blockUserConfirm('${chatUser.userId}')" style="padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--danger-light, #ffe4e6)'" onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-ban" style="width: 24px;"></i> Block User
+                                    </div>
+                                    <form action="MessageServlet" method="POST" style="margin:0;" onsubmit="return confirm('Clear chat history for you? The other user will still see the conversation.');">
+                                        <input type="hidden" name="action" value="clearChat">
+                                        <input type="hidden" name="otherUserId" value="${chatUser.userId}">
+                                        <button type="submit" class="dropdown-item text-danger" style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; display:flex; align-items:center; font-family:inherit; font-size:inherit; transition:background 0.2s;" onmouseover="this.style.background='var(--danger-light, #ffe4e6)'" onmouseout="this.style.background='transparent'">
+                                            <i class="fas fa-trash-alt" style="width: 24px;"></i> Clear Chat
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -559,38 +589,43 @@
                                         <c:set var="prevDate" value="${currentMsgDate}" />
                                     </c:if>
 
-                                    <div class="message-row ${msg.senderId == sessionScope.user.userId ? 'sent' : 'received'}">
+                                    <div class="message-row ${msg.senderId == sessionScope.user.userId ? 'sent' : 'received'}" style="position:relative;">
                                         <c:if test="${msg.senderId != sessionScope.user.userId}">
                                             <img src="${chatUser.profilePhoto != null && chatUser.profilePhoto.startsWith('http') ? chatUser.profilePhoto : pageContext.request.contextPath.concat('/').concat(chatUser.profilePhoto != null ? chatUser.profilePhoto : 'images/default-avatar.png')}" class="msg-avatar">
                                         </c:if>
-                                        <div class="message-bubble ${msg.senderId == sessionScope.user.userId ? 'message-sent' : 'message-received'}" data-id="${msg.messageId}" style="margin-bottom: 0px; max-width: 80%; width: fit-content;">
-                                            <div class="react-msg-btn" title="React" onclick="toggleEmojiPicker('${msg.messageId}', event)" style="font-size: 1.1rem; opacity: 0.6; transition: opacity 0.2s;">
-                                                😊
-                                            </div>
-                                            <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup">
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '❤️', event)">❤️</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '🔥', event)">🔥</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '😂', event)">😂</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '😮', event)">😮</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '👏', event)">👏</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '🙌', event)">🙌</span>
-                                                <span onclick="toggleMessageReaction('${msg.messageId}', '😢', event)">😢</span>
-                                            </div>
-                                            <c:if test="${msg.senderId == sessionScope.user.userId}">
-                                                <form action="MessageServlet" method="POST" style="margin:0;">
-                                                    <input type="hidden" name="action" value="deleteMessage">
-                                                    <input type="hidden" name="messageId" value="${msg.messageId}">
-                                                    <input type="hidden" name="withUserId" value="${chatUser.userId}">
-                                                    <button type="submit" class="delete-msg-btn" title="Delete Message" onclick="return confirm('Delete this message?');">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
-                                            </c:if>
-
+                                        
+                                        <div class="message-bubble ${msg.senderId == sessionScope.user.userId ? 'message-sent' : 'message-received'}" data-id="${msg.messageId}" 
+                                             ondblclick="toggleMsgOptions('${msg.messageId}', event)" 
+                                             onmousedown="startLongPress('${msg.messageId}', event)" 
+                                             onmouseup="cancelLongPress()" 
+                                             onmouseleave="cancelLongPress()"
+                                             ontouchstart="startLongPress('${msg.messageId}', event)" 
+                                             ontouchend="cancelLongPress()" 
+                                             style="margin-bottom: 0px; max-width: 80%; width: fit-content; cursor: pointer; user-select: none; -webkit-user-select: none;">
+                                             
                                             <!-- ATTACHMENT RENDERING -->
                                             <c:if test="${not empty msg.attachmentUrl}">
                                                 <div style="margin-bottom: 8px;">
                                                     <c:choose>
+                                                        <c:when test="${msg.attachmentType == 'image_view_once'}">
+                                                            <c:choose>
+                                                                <c:when test="${msg.senderId == sessionScope.user.userId}">
+                                                                    <div style="padding:10px; background:var(--bg-light); border:1px solid var(--border-color); border-radius:8px; font-style:italic; font-size:0.85rem; color:var(--text-muted);">
+                                                                        <i class="fas fa-bomb text-danger"></i> You sent a View Once photo.
+                                                                    </div>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <button type="button" class="btn btn-primary" onclick="viewOncePhoto('${msg.attachmentUrl}', '${msg.messageId}', this)" style="border-radius:20px; padding: 6px 16px; font-size: 0.9rem;">
+                                                                        <i class="fas fa-image"></i> View Photo
+                                                                    </button>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:when test="${msg.attachmentType == 'image_viewed'}">
+                                                            <div style="padding:10px; border-radius:8px; font-style:italic; font-size:0.85rem; color:var(--text-muted);">
+                                                                <i class="fas fa-eye"></i> Photo viewed
+                                                            </div>
+                                                        </c:when>
                                                         <c:when test="${msg.attachmentType == 'image'}">
                                                             <div style="position: relative; display: inline-block;">
                                                                 <a href="${msg.attachmentUrl}" target="_blank">
@@ -624,13 +659,63 @@
                                             </c:if>
 
                                             ${msg.messageText}
-                                            <div class="msg-time"><fmt:formatDate value="${msg.messageTime}" pattern="hh:mm a" /></div>
+                                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:4px;">
+                                                <div class="msg-time local-time-convert" data-time="${msg.messageTime.time}" data-format="time">
+                                                    <i class="fas fa-clock fa-spin" style="font-size:8px;"></i>
+                                                </div>
+                                                <c:if test="${msg.senderId == sessionScope.user.userId}">
+                                                    <c:choose>
+                                                        <c:when test="${msg.read}"><i class="fas fa-check-double" style="font-size:10px; color:#3b82f6;" title="Seen"></i></c:when>
+                                                        <c:otherwise><i class="fas fa-check" style="font-size:10px; color:var(--text-muted);" title="Sent"></i></c:otherwise>
+                                                    </c:choose>
+                                                </c:if>
+                                            </div>
                                             <div id="msg-reactions-${msg.messageId}" class="msg-reactions"></div>
+                                        </div>
+                                        
+                                        <div class="msg-options-trigger" onclick="toggleMsgOptions('${msg.messageId}', event)" style="padding: 0 8px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </div>
+                                        
+                                        <!-- Message Dropdown Menu -->
+                                        <div id="msg-dropdown-${msg.messageId}" class="msg-dropdown-menu" style="display: none; position: absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: 100%; z-index: 100; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 0.25rem 0; min-width: 160px;">
+                                            <div class="dropdown-item" onclick="toggleEmojiPicker('${msg.messageId}', event)" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                                <i class="far fa-smile" style="width: 20px;"></i> React
+                                            </div>
+                                            <c:if test="${not empty msg.attachmentUrl && msg.attachmentType == 'image'}">
+                                                <div class="dropdown-item" onclick="forceDownload('${msg.attachmentUrl}', 'photo_${msg.messageId}.jpg')" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                                    <i class="fas fa-download" style="width: 20px;"></i> Download Image
+                                                </div>
+                                            </c:if>
+                                            <c:if test="${msg.senderId == sessionScope.user.userId}">
+                                                <div class="dropdown-item text-danger" onclick="unsendMessage('${msg.messageId}', '${chatUser.userId}')" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                                    <i class="fas fa-undo" style="width: 20px;"></i> Unsend message
+                                                </div>
+                                            </c:if>
+                                            <div class="dropdown-item" onclick="hideMessageLocally(this)" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                                <i class="fas fa-eye-slash" style="width: 20px;"></i> Delete for me
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Emoji Picker -->
+                                        <div id="emoji-picker-${msg.messageId}" class="emoji-picker-popup" style="display:none; position:absolute; ${msg.senderId == sessionScope.user.userId ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:white; border-radius:30px; padding:8px 16px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '❤️', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">❤️</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '🔥', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🔥</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😂', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😂</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😮', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😮</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '👏', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">👏</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '🙌', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🙌</span>
+                                            <span onclick="toggleMessageReaction('${msg.messageId}', '😢', event)" style="cursor:pointer; font-size:1.2rem;">😢</span>
                                         </div>
                                     </div>
                                     <c:set var="lastMsgId" value="${msg.messageId}" />
                                 </c:if>
                             </c:forEach>
+                            
+                            <!-- Typing Indicator -->
+                            <div id="typingIndicator" style="display: none; padding: 10px 20px; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+                                ${chatUser.name} is typing...
+                            </div>
                         </div>
                         <script>
                             document.querySelectorAll('.message-bubble').forEach(bubble => {
@@ -705,6 +790,7 @@
                             const container = document.getElementById('attachment-preview-container');
                             const nameSpan = document.getElementById('attachment-preview-name');
                             const icon = document.getElementById('attachment-preview-icon');
+                            const viewOnceLabel = document.getElementById('viewOnceLabel');
                             
                             if (input.files && input.files[0]) {
                                 const file = input.files[0];
@@ -714,18 +800,25 @@
                                 icon.className = 'fas text-muted';
                                 if (file.type.startsWith('image/')) {
                                     icon.classList.add('fa-image');
+                                    icon.style.color = '#3b82f6';
+                                    if(viewOnceLabel) viewOnceLabel.style.display = 'flex';
                                 } else if (file.type.startsWith('video/')) {
                                     icon.classList.add('fa-video');
+                                    icon.style.color = '#8b5cf6';
+                                    if(viewOnceLabel) viewOnceLabel.style.display = 'none';
                                 } else if (file.type === 'application/pdf') {
                                     icon.classList.add('fa-file-pdf');
                                     icon.style.color = '#e25555';
+                                    if(viewOnceLabel) viewOnceLabel.style.display = 'none';
                                 } else {
                                     icon.classList.add('fa-file');
+                                    if(viewOnceLabel) viewOnceLabel.style.display = 'none';
                                 }
                                 
                                 container.style.display = 'flex';
                             } else {
                                 container.style.display = 'none';
+                                if(viewOnceLabel) viewOnceLabel.style.display = 'none';
                             }
                         }
                         
@@ -747,6 +840,218 @@
                             }
                         }
                     </script>
+                    <script>
+                        // Convert times to local timezone
+                        function formatLocalTimes() {
+                            document.querySelectorAll('.local-time-convert:not(.converted)').forEach(el => {
+                                const d = new Date(parseInt(el.getAttribute('data-time')));
+                                if (el.getAttribute('data-format') === 'time') {
+                                    el.innerHTML = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                } else {
+                                    el.innerHTML = d.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'}) + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                }
+                                el.classList.add('converted');
+                            });
+                        }
+                        formatLocalTimes();
+
+                        // Chat Polling and Typing Logic
+                        let lastMessageId = parseInt(document.getElementById('lastMessageId').value) || 0;
+                        const mainChatUserId = document.getElementById('currentChatUserId').value;
+                        const typingIndicator = document.getElementById('typingIndicator');
+                        
+                        function sendTypingPing() {
+                            fetch((window.contextPath || '') + '/MessageServlet', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: 'action=typing&withUserId=' + mainChatUserId
+                            }).catch(console.error);
+                        }
+                        
+                        const msgInputArea = document.querySelector('input[name="messageText"]');
+                        if (msgInputArea) {
+                            msgInputArea.addEventListener('input', () => {
+                                // debounce typing ping
+                                if(window.typingTimer) clearTimeout(window.typingTimer);
+                                window.typingTimer = setTimeout(sendTypingPing, 500);
+                            });
+                        }
+
+                        function pollMessages() {
+                            fetch((window.contextPath || '') + '/MessageServlet?ajax=true&with=' + mainChatUserId + '&lastId=' + lastMessageId)
+                            .then(res => res.json())
+                            .then(data => {
+                                // data could be an array of messages or { typing: true/false, messages: [...] }
+                                let messages = [];
+                                if (Array.isArray(data)) {
+                                    messages = data;
+                                } else if (data.messages) {
+                                    messages = data.messages;
+                                    typingIndicator.style.display = data.isTyping ? 'block' : 'none';
+                                }
+                                
+                                if (messages.length > 0) {
+                                    const chatWindow = document.getElementById('chatWindow');
+                                    messages.forEach(msg => {
+                                        if (msg.text && msg.text.startsWith('[SIGNAL]')) {
+                                            handleWebRTCSignal(msg.text);
+                                        } else {
+                                            appendMessageToChat(msg);
+                                        }
+                                        if (msg.id > lastMessageId) lastMessageId = msg.id;
+                                    });
+                                    document.getElementById('lastMessageId').value = lastMessageId;
+                                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                                    setTimeout(formatLocalTimes, 100);
+                                }
+                            })
+                            .catch(err => {
+                                // Silent fail for polling
+                            });
+                        }
+                        
+                        function appendMessageToChat(msg) {
+                            const chatWindow = document.getElementById('chatWindow');
+                            const isSender = msg.senderId == window.currentUserId;
+                            const avatarHtml = !isSender ? `<img src="${chatUser.profilePhoto != null ? chatUser.profilePhoto : 'images/default-avatar.png'}" class="msg-avatar">` : '';
+                            
+                            const div = document.createElement('div');
+                            div.className = 'message-row ' + (isSender ? 'sent' : 'received');
+                            div.style.position = 'relative';
+                            
+                            let attachmentHtml = '';
+                            if (msg.attachmentType === 'image_view_once') {
+                                if (isSender) {
+                                    attachmentHtml = `<div style="margin-bottom:8px;"><div style="padding:10px; background:var(--bg-light); border:1px solid var(--border-color); border-radius:8px; font-style:italic; font-size:0.85rem; color:var(--text-muted);">
+                                        <i class="fas fa-bomb text-danger"></i> You sent a View Once photo.
+                                    </div></div>`;
+                                } else {
+                                    attachmentHtml = `<div style="margin-bottom:8px;"><button type="button" class="btn btn-primary" onclick="viewOncePhoto('\${msg.attachmentUrl}', '\${msg.id}', this)" style="border-radius:20px; padding: 6px 16px; font-size: 0.9rem;">
+                                        <i class="fas fa-image"></i> View Photo
+                                    </button></div>`;
+                                }
+                            } else if (msg.attachmentType === 'image_viewed') {
+                                attachmentHtml = `<div style="margin-bottom:8px;"><div style="padding:10px; border-radius:8px; font-style:italic; font-size:0.85rem; color:var(--text-muted);">
+                                    <i class="fas fa-eye"></i> Photo viewed
+                                </div></div>`;
+                            } else if (msg.attachmentUrl && msg.attachmentUrl !== 'null') {
+                                if (msg.attachmentType === 'image') {
+                                    attachmentHtml = `<div style="margin-bottom:8px;"><img src="\${msg.attachmentUrl}" style="max-width:100%; max-height:250px; border-radius:8px; object-fit:contain;"></div>`;
+                                } else if (msg.attachmentType === 'video') {
+                                    attachmentHtml = `<div style="margin-bottom:8px;"><video controls src="\${msg.attachmentUrl}" style="max-width:100%; max-height:250px; border-radius:8px;"></video></div>`;
+                                }
+                            }
+                            
+                            div.innerHTML = `
+                                \${avatarHtml}
+                                <div class="message-bubble \${isSender ? 'message-sent' : 'message-received'}" data-id="\${msg.id}"
+                                     ondblclick="toggleMsgOptions('\${msg.id}', event)" 
+                                     onmousedown="startLongPress('\${msg.id}', event)" 
+                                     onmouseup="cancelLongPress()" 
+                                     onmouseleave="cancelLongPress()"
+                                     ontouchstart="startLongPress('\${msg.id}', event)" 
+                                     ontouchend="cancelLongPress()" 
+                                     style="margin-bottom: 0px; max-width: 80%; width: fit-content; cursor: pointer; user-select: none; -webkit-user-select: none;">
+                                    \${attachmentHtml}
+                                    \${msg.text}
+                                    <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:4px;">
+                                        <div class="msg-time local-time-convert" data-time="\${msg.time}" data-format="time"></div>
+                                        \${isSender ? (msg.read ? '<i class="fas fa-check-double" style="font-size:10px; color:#3b82f6;" title="Seen"></i>' : '<i class="fas fa-check" style="font-size:10px; color:var(--text-muted);" title="Sent"></i>') : ''}
+                                    </div>
+                                    <div id="msg-reactions-\${msg.id}" class="msg-reactions"></div>
+                                </div>
+                                
+                                <div class="msg-options-trigger" onclick="toggleMsgOptions('\${msg.id}', event)" style="padding: 0 8px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </div>
+                                
+                                <div id="msg-dropdown-\${msg.id}" class="msg-dropdown-menu" style="display: none; position: absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: 100%; z-index: 100; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 0.25rem 0; min-width: 160px;">
+                                    <div class="dropdown-item" onclick="toggleEmojiPicker('\${msg.id}', event)" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                        <i class="far fa-smile" style="width: 20px;"></i> React
+                                    </div>
+                                    \${msg.attachmentUrl && msg.attachmentUrl !== 'null' && msg.attachmentType === 'image' ? 
+                                        '<div class="dropdown-item" onclick="forceDownload(\\''+msg.attachmentUrl+'\\', \\'photo_'+msg.id+'.jpg\\')" style="padding: 0.5rem 1rem; cursor: pointer;"><i class="fas fa-download" style="width: 20px;"></i> Download Image</div>' 
+                                    : ''}
+                                    \${isSender ? '<div class="dropdown-item text-danger" onclick="unsendMessage(\\''+msg.id+'\\', \\''+mainChatUserId+'\\')" style="padding: 0.5rem 1rem; cursor: pointer;"><i class="fas fa-undo" style="width: 20px;"></i> Unsend message</div>' : ''}
+                                    <div class="dropdown-item" onclick="hideMessageLocally(this)" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                        <i class="fas fa-eye-slash" style="width: 20px;"></i> Delete for me
+                                    </div>
+                                </div>
+                                
+                                <div id="emoji-picker-\${msg.id}" class="emoji-picker-popup" style="display:none; position:absolute; \${isSender ? 'right: 30px;' : 'left: 40px;'} top: calc(100% + 40px); z-index: 101; background:white; border-radius:30px; padding:8px 16px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '❤️', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">❤️</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '🔥', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🔥</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '😂', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😂</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '😮', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">😮</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '👏', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">👏</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '🙌', event)" style="cursor:pointer; font-size:1.2rem; margin-right:4px;">🙌</span>
+                                    <span onclick="toggleMessageReaction('\${msg.id}', '😢', event)" style="cursor:pointer; font-size:1.2rem;">😢</span>
+                                </div>
+                            `;
+                            chatWindow.insertBefore(div, typingIndicator);
+                        }
+
+                        setInterval(pollMessages, 2000); // Poll every 2 seconds
+                    </script>
+                    
+                    <!-- Chat Background Image Logic -->
+                    <script>
+                        const bgInput = document.getElementById('chatBgInput');
+                        const changeBgBtn = document.getElementById('changeChatBgBtn');
+                        const chatMainBg = document.getElementById('chatWindow'); // Applies to messages area
+                        
+                        const savedBg = localStorage.getItem('chatBg_' + window.currentUserId);
+                        if (savedBg) {
+                            chatMainBg.style.backgroundImage = `url(\${savedBg})`;
+                            chatMainBg.style.backgroundSize = 'cover';
+                            chatMainBg.style.backgroundPosition = 'center';
+                        }
+
+                        if (changeBgBtn && bgInput) {
+                            changeBgBtn.onclick = () => bgInput.click();
+                            
+                            bgInput.onchange = (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                    // Compress image using Canvas to save localStorage space
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        let width = img.width;
+                                        let height = img.height;
+                                        const MAX_WIDTH = 800;
+                                        const MAX_HEIGHT = 800;
+                                        
+                                        if (width > height) {
+                                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                                        } else {
+                                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                                        }
+                                        
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(img, 0, 0, width, height);
+                                        
+                                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality JPEG
+                                        try {
+                                            localStorage.setItem('chatBg_' + window.currentUserId, dataUrl);
+                                            chatMainBg.style.backgroundImage = `url(\${dataUrl})`;
+                                            chatMainBg.style.backgroundSize = 'cover';
+                                            chatMainBg.style.backgroundPosition = 'center';
+                                        } catch (e) {
+                                            alert("Image too large to save. Try a smaller image.");
+                                        }
+                                    };
+                                    img.src = event.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            };
+                        }
+                    </script>
                     
                     <!-- Scroll to bottom script -->
                     <script>
@@ -765,7 +1070,259 @@
                 </c:otherwise>
             </c:choose>
         </div>
+        </div>
     </div>
+    
+    <!-- Shared Media Modal -->
+    <div id="sharedMediaModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9000;">
+        <div class="modal-content card" style="max-width:600px; width:95%; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-white);">
+                <h3 style="margin: 0; display:flex; align-items:center; gap:0.5rem;"><i class="fas fa-images text-primary"></i> Shared Media</h3>
+                <span class="close" onclick="document.getElementById('sharedMediaModal').style.display='none'" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 1.5rem; background: var(--bg-light);">
+                <div id="shared-media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">
+                    <!-- Media items injected here via JS -->
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid var(--border-color); text-align: center; background: var(--bg-white);">
+                <a href="ProfileServlet?id=${chatUser.userId}" class="btn btn-outline" style="width: 100%;">View Full Profile</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Themes Modal -->
+    <div id="chatThemeModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9000;">
+        <div class="modal-content card" style="max-width:400px; width:95%; height:auto; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-white);">
+                <h3 style="margin: 0; display:flex; align-items:center; gap:0.5rem;"><i class="fas fa-palette text-primary"></i> Chat Themes</h3>
+                <span class="close" onclick="document.getElementById('chatThemeModal').style.display='none'" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 1.5rem; background: var(--bg-light);">
+                <div id="themes-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <!-- Themes injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme Logic -->
+    <script>
+        const chatThemes = [
+            { id: "default", name: "Default Light", bg: "var(--bg-light)", sent: "var(--primary-color)", received: "var(--bg-white)", sentText: "white", receivedText: "var(--text-main)" },
+            { id: "dark", name: "Dark Mode", bg: "#1f2937", sent: "#3b82f6", received: "#374151", sentText: "white", receivedText: "#f3f4f6" },
+            { id: "ocean", name: "Ocean Blue", bg: "linear-gradient(to right, #00c6ff, #0072ff)", sent: "rgba(255,255,255,0.9)", received: "rgba(0,0,0,0.6)", sentText: "#0072ff", receivedText: "white" },
+            { id: "sunset", name: "Sunset Orange", bg: "linear-gradient(to top, #ff7e5f, #feb47b)", sent: "#ff512f", received: "#fff", sentText: "white", receivedText: "#333" },
+            { id: "forest", name: "Forest Green", bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", sent: "#15803d", received: "#fff", sentText: "white", receivedText: "#15803d" },
+            { id: "purple", name: "Purple Dream", bg: "linear-gradient(to right, #feac5e, #c779d0, #4bc0c8)", sent: "#8b5cf6", received: "#fff", sentText: "white", receivedText: "#4c1d95" },
+            { id: "cherry", name: "Cherry Blossom", bg: "linear-gradient(to top, #ff0844 0%, #ffb199 100%)", sent: "#e11d48", received: "#ffe4e6", sentText: "white", receivedText: "#881337" },
+            { id: "midnight", name: "Midnight City", bg: "linear-gradient(to top, #0f2027, #203a43, #2c5364)", sent: "#06b6d4", received: "rgba(255,255,255,0.1)", sentText: "white", receivedText: "white" },
+            { id: "neon", name: "Neon Vibes", bg: "#000000", sent: "#ff00ff", received: "#00ffff", sentText: "white", receivedText: "black" },
+            { id: "coffee", name: "Coffee Warm", bg: "#dfd2c0", sent: "#8b5a2b", received: "#fff8dc", sentText: "white", receivedText: "#4a3b2c" }
+        ];
+
+        function applyTheme(themeId) {
+            const theme = chatThemes.find(t => t.id === themeId);
+            if (!theme) return;
+            
+            const chatMainBg = document.getElementById('chatMainBg');
+            if (chatMainBg) {
+                // Ignore background if user uploaded custom bg earlier, unless they revert to default
+                const hasCustomBg = localStorage.getItem('chatBg_' + window.currentUserId);
+                if (!hasCustomBg || themeId !== 'default') {
+                    chatMainBg.style.background = theme.bg;
+                    if(themeId === 'default' && hasCustomBg) {
+                        chatMainBg.style.backgroundImage = 'url('+hasCustomBg+')';
+                        chatMainBg.style.backgroundSize = 'cover';
+                    } else {
+                        chatMainBg.style.backgroundImage = 'none';
+                    }
+                }
+                
+                // Add variables to local context
+                chatMainBg.style.setProperty('--chat-msg-sent', theme.sent);
+                chatMainBg.style.setProperty('--chat-msg-recv', theme.received);
+                chatMainBg.style.setProperty('--chat-text-sent', theme.sentText);
+                chatMainBg.style.setProperty('--chat-text-recv', theme.receivedText);
+                
+                if (themeId !== 'default') chatMainBg.classList.add('theme-active');
+                else chatMainBg.classList.remove('theme-active');
+            }
+            localStorage.setItem('chatTheme_' + window.currentUserId, themeId);
+            document.getElementById('chatThemeModal').style.display='none';
+            renderThemes(); // Re-render to show active checkmark
+        }
+
+        function renderThemes() {
+            const grid = document.getElementById('themes-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const activeThemeId = localStorage.getItem('chatTheme_' + window.currentUserId) || 'default';
+            
+            chatThemes.forEach(t => {
+                const isActive = t.id === activeThemeId;
+                grid.innerHTML += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:12px; border:2px solid \${isActive ? 'var(--primary-color)' : 'transparent'}; background:var(--bg-white); cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05);" onclick="applyTheme('\${t.id}')">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:40px; height:40px; border-radius:50%; background:\${t.bg}; border:1px solid rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
+                            <span style="font-weight:600; font-size:1rem; \${isActive ? 'color:var(--primary-color)' : 'color:var(--text-main)'}">\${t.name}</span>
+                        </div>
+                        \${isActive ? '<i class="fas fa-check-circle text-primary" style="font-size:1.2rem;"></i>' : ''}
+                    </div>
+                `;
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedThemeId = localStorage.getItem('chatTheme_' + window.currentUserId) || 'default';
+            if (savedThemeId !== 'default') {
+                applyTheme(savedThemeId);
+            }
+            renderThemes();
+        });
+    </script>
+    
+    <!-- Message Context Menu Logic -->
+    <script>
+        // Long Press and Double Click Logic
+        let longPressTimer;
+        
+        function startLongPress(msgId, e) {
+            cancelLongPress();
+            longPressTimer = setTimeout(() => {
+                toggleMsgOptions(msgId, e);
+            }, 600); // 600ms = long press
+        }
+        
+        function cancelLongPress() {
+            clearTimeout(longPressTimer);
+        }
+        
+        function toggleMsgOptions(msgId, e) {
+            if (e) e.stopPropagation();
+            
+            // Close all others first
+            document.querySelectorAll('.msg-dropdown-menu').forEach(menu => {
+                if (menu.id !== 'msg-dropdown-' + msgId) menu.style.display = 'none';
+            });
+            document.querySelectorAll('.emoji-picker-popup').forEach(p => p.style.display = 'none');
+            
+            const menu = document.getElementById('msg-dropdown-' + msgId);
+            if (menu) {
+                const isVisible = menu.style.display === 'block';
+                menu.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+        
+        function unsendMessage(msgId, withUserId) {
+            if (!confirm("Unsend this message for everyone?")) return;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'MessageServlet';
+            form.innerHTML = `<input type="hidden" name="action" value="deleteMessage"><input type="hidden" name="messageId" value="\${msgId}"><input type="hidden" name="withUserId" value="\${withUserId}">`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+        
+        function hideMessageLocally(btn) {
+            const row = btn.closest('.message-row');
+            if (row) {
+                row.style.opacity = '0';
+                setTimeout(() => row.style.display = 'none', 300);
+            }
+        }
+        
+        function forceDownload(url, filename) {
+            fetch(url).then(response => response.blob()).then(blob => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename || 'download.jpeg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }).catch(e => {
+                console.error("Download failed, opening cross-origin fallback", e);
+                window.open(url, '_blank');
+            });
+        }
+        
+        function viewOncePhoto(url, msgId, btn) {
+            // Show modal covering screen
+            const modal = document.createElement('div');
+            modal.style = "position:fixed; top:0;left:0;width:100%;height:100%;background:black;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;";
+            modal.innerHTML = `
+                <div style="position:absolute; top:20px; right:20px; color:white; font-size:1.5rem; cursor:pointer;" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </div>
+                <img src="\${url}" style="max-width:100%; max-height:80vh; object-fit:contain;">
+                <div style="color:white; margin-top:20px; font-size:0.9rem;"><i class="fas fa-fire" style="color:#ff6b6b;"></i> This photo will disappear when you close this screen.</div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Replace the button with "Viewed" text
+            const parent = btn.parentElement;
+            parent.innerHTML = `<div style="padding:10px; border-radius:8px; font-style:italic; font-size:0.85rem; color:var(--text-muted);"><i class="fas fa-eye"></i> Photo viewed</div>`;
+            
+            // Tell server to mark it as viewed (which clears DB attachment_url and changes type to image_viewed)
+            fetch((window.contextPath || '') + '/MessageServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=markViewOnce&messageId=' + msgId
+            }).catch(console.error);
+        }
+        
+        function openSharedMediaModal() {
+            const modal = document.getElementById('sharedMediaModal');
+            const container = document.getElementById('shared-media-grid');
+            container.innerHTML = '';
+            
+            // Extract media from the chat DOM
+            const mediaElements = document.querySelectorAll('.message-bubble img[src], .message-bubble video source');
+            
+            if (mediaElements.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted" style="grid-column: 1/-1; padding: 3rem;"><i class="fas fa-folder-open fa-3x mb-3" style="opacity:0.3;"></i><br>No media shared in this conversation yet.</div>';
+            } else {
+                const uniqueSrcs = new Set();
+                mediaElements.forEach(el => {
+                    // Ignore emojis or default avatars if they accidentally have img tags instead of span
+                    if (el.classList.contains('msg-avatar')) return; 
+                    
+                    const src = el.tagName === 'SOURCE' ? el.src : el.src;
+                    
+                    const msgRow = el.closest('.message-bubble');
+                    const timeEl = msgRow ? msgRow.querySelector('.msg-time') : null;
+                    const timeText = timeEl ? timeEl.innerText.trim() : 'Unknown Time';
+                    
+                    if (!uniqueSrcs.has(src)) {
+                        uniqueSrcs.add(src);
+                        if (el.tagName === 'SOURCE') {
+                            container.innerHTML += `
+                                <div class="media-item shadow-sm" style="position:relative; aspect-ratio:1/1; background:#000; overflow:hidden; border-radius:12px;">
+                                    <video src="\${src}" style="width:100%; height:100%; object-fit:cover;"></video>
+                                    <i class="fas fa-video" style="position:absolute; top:8px; right:8px; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.8);"></i>
+                                    <div style="position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(0,0,0,0.8)); color:white; font-size:10px; padding:8px 6px 4px;">\${timeText}</div>
+                                </div>`;
+                        } else {
+                            container.innerHTML += `
+                                <div class="media-item shadow-sm" style="position:relative; aspect-ratio:1/1; background:#eee; overflow:hidden; border-radius:12px;">
+                                    <img src="\${src}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="window.open('\${src}', '_blank')">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(0,0,0,0.8)); color:white; font-size:10px; padding:8px 6px 4px;">\${timeText}</div>
+                                </div>`;
+                        }
+                    }
+                });
+            }
+            modal.style.display = 'flex';
+        }
+        
+        // Hide dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.msg-dropdown-menu') && !e.target.closest('.msg-options-trigger') && !e.target.closest('.message-bubble')) {
+                document.querySelectorAll('.msg-dropdown-menu').forEach(menu => menu.style.display = 'none');
+            }
+        });
+    </script>
     
     <!-- Message Reaction Logic -->
     <script>
@@ -823,6 +1380,128 @@
                 container.innerHTML = html;
             })
             .catch(err => console.error('Error loading reactions:', err));
+        }
+    </script>
+    
+    <!-- WebRTC Video Call Logic -->
+    <script>
+        let localStream;
+        let peerConnection;
+        let isCaller = false;
+        let callInterval;
+        
+        const servers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }
+            ]
+        };
+
+        const startVideoCallBtn = document.getElementById('startVideoCallBtn');
+        const videoOverlay = document.getElementById('video-overlay');
+        const incomingCallUI = document.getElementById('incoming-call-ui');
+        const callControls = document.getElementById('call-controls');
+        
+        if (startVideoCallBtn) {
+            startVideoCallBtn.onclick = () => {
+                isCaller = true;
+                startCallUI();
+                setupWebRTC();
+            };
+        }
+
+        function startCallUI() {
+            videoOverlay.style.display = 'flex';
+            incomingCallUI.style.display = 'none';
+            callControls.style.display = 'flex';
+        }
+
+        async function setupWebRTC() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                
+                peerConnection = new RTCPeerConnection(servers);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                
+                peerConnection.ontrack = event => {
+                    document.getElementById('remoteVideo').srcObject = event.streams[0];
+                };
+                
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        sendSignal({ type: 'ice', candidate: event.candidate });
+                    }
+                };
+
+                if (isCaller) {
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    sendSignal({ type: 'offer', offer: offer });
+                }
+            } catch (err) {
+                console.error("WebRTC Error:", err);
+                alert("Could not access camera/microphone.");
+                endCall();
+            }
+        }
+
+        function sendSignal(data) {
+            const chatUserId = new URLSearchParams(window.location.search).get('with');
+            if(!chatUserId) return;
+            const signalStr = '[SIGNAL]' + JSON.stringify(data);
+            fetch((window.contextPath || '') + '/MessageServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=send&receiverId=${chatUserId}&messageText=${encodeURIComponent(signalStr)}&ajax=true`
+            });
+        }
+
+        // Function called periodically from pollMessages if [SIGNAL] is detected
+        async function handleWebRTCSignal(signalText) {
+            if (!peerConnection && !signalText.includes('"type":"offer"')) return; // Ignore if not in call and not an offer
+            
+            try {
+                const data = JSON.parse(signalText.replace('[SIGNAL]', ''));
+                
+                if (data.type === 'offer') {
+                    if (!peerConnection) {
+                        videoOverlay.style.display = 'flex';
+                        callControls.style.display = 'none';
+                        incomingCallUI.style.display = 'block';
+                        window.pendingOffer = data.offer;
+                    }
+                } else if (data.type === 'answer') {
+                    if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                } else if (data.type === 'ice') {
+                    if (peerConnection) await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                } else if (data.type === 'end') {
+                    endCall(false);
+                }
+            } catch (e) {
+                console.error("Signal parse error", e);
+            }
+        }
+
+        async function acceptCall() {
+            isCaller = false;
+            startCallUI();
+            await setupWebRTC();
+            if (window.pendingOffer) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                sendSignal({ type: 'answer', answer: answer });
+                window.pendingOffer = null;
+            }
+        }
+
+        function endCall(notify = true) {
+            if (notify) sendSignal({ type: 'end' });
+            if (peerConnection) { peerConnection.close(); peerConnection = null; }
+            if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+            document.getElementById('video-overlay').style.display = 'none';
+            document.getElementById('remoteVideo').srcObject = null;
+            document.getElementById('localVideo').srcObject = null;
         }
     </script>
     <script src="${pageContext.request.contextPath}/js/app_v2.js?v=20260317"></script>

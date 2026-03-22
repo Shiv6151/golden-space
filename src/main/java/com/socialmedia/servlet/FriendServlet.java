@@ -66,6 +66,10 @@ public class FriendServlet extends HttpServlet {
             friendDAO.updateFriendRequestStatus(friendId, currentUser.getUserId(), "REJECTED");
         } else if ("remove".equals(action)) {
             friendDAO.deleteFriendRequest(currentUser.getUserId(), friendId);
+        } else if ("block".equals(action)) {
+            friendDAO.blockUser(currentUser.getUserId(), friendId);
+            response.getWriter().write("success");
+            return;
         }
 
         // Check if there is a referer to redirect back
