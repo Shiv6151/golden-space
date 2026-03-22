@@ -1345,7 +1345,7 @@
                 
                 let html = '';
                 data.forEach(r => {
-                    html += '<span class="reaction-badge" title="React with '+r.emoji+'" style="background:var(--bg-light); border:1px solid var(--border-color); border-radius:12px; padding:2px 6px; font-size:0.8rem; margin-right:4px; cursor:pointer;" onclick="toggleMessageReaction(\''+messageId+'\', \''+r.emoji+'\', event)">' + r.emoji + ' ' + r.count + '</span>';
+                    html += '<span class="reaction-badge" title="React with '+r.emoji+'" style="background:transparent; border:none; padding:2px 4px; font-size:1.15rem; margin-right:2px; cursor:pointer;" onclick="toggleMessageReaction(\''+messageId+'\', \''+r.emoji+'\', event)">' + r.emoji + '</span>';
                 });
                 container.innerHTML = html;
             })
