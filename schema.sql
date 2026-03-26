@@ -20,9 +20,86 @@ CREATE TABLE Users (
     password VARCHAR(255) NOT NULL,
     profile_photo VARCHAR(512) DEFAULT 'images/default-avatar.png',
     bio TEXT,
+    headline VARCHAR(255),
+    professional_summary TEXT,
     is_private BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email CHECK (email LIKE '%@gmail.com')
+);
+
+-- Existing tables...
+-- [otp_verification, Posts, PostImages, Comments, Likes, Messages, PostReactions, MessageReactions, friend_requests, followers omitted for brevity in this replace call, but they stay the same]
+
+-- Professional Features Tables
+
+CREATE TABLE Experience (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    company VARCHAR(100) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    location VARCHAR(100),
+    start_date DATE NOT NULL,
+    end_date DATE,
+    description TEXT,
+    is_current BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Education (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    school VARCHAR(100) NOT NULL,
+    degree VARCHAR(100) NOT NULL,
+    field_of_study VARCHAR(100),
+    start_date DATE NOT NULL,
+    end_date DATE,
+    description TEXT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(50)
+);
+
+CREATE TABLE UserSkills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    skill_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES Skills(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_skill (user_id, skill_id)
+);
+
+CREATE TABLE Endorsements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_skill_id INT NOT NULL,
+    endorser_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_skill_id) REFERENCES UserSkills(id) ON DELETE CASCADE,
+    FOREIGN KEY (endorser_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_endorsement (user_skill_id, endorser_id)
+);
+
+CREATE TABLE Recommendations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    text TEXT NOT NULL,
+    status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE ProfileViews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    viewer_id INT NOT NULL,
+    profile_id INT NOT NULL,
+    view_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (viewer_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE otp_verification (
