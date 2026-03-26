@@ -143,9 +143,15 @@
             transform: rotate(180deg);
             color: var(--primary-color);
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @media (max-width: 600px) {
+            .chat-bg-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            .chat-bg-actions .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
