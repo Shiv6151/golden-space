@@ -47,16 +47,23 @@ public class DBConnection {
                          "    UNIQUE KEY unique_block (blocker_id, blocked_id)" +
                          ")");
                 
-                stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Recommendations (" +
-                         "    id INT AUTO_INCREMENT PRIMARY KEY," +
-                         "    sender_id INT NOT NULL," +
-                         "    receiver_id INT NOT NULL," +
-                         "    text TEXT NOT NULL," +
-                         "    status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING'," +
-                         "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                         "    FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE," +
-                         "    FOREIGN KEY (receiver_id) REFERENCES Users(user_id) ON DELETE CASCADE" +
-                         ")");
+                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Recommendations (" +
+                          "    id INT AUTO_INCREMENT PRIMARY KEY," +
+                          "    sender_id INT NOT NULL," +
+                          "    receiver_id INT NOT NULL," +
+                          "    text TEXT NOT NULL," +
+                          "    status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING'," +
+                          "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                          "    FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE," +
+                          "    FOREIGN KEY (receiver_id) REFERENCES Users(user_id) ON DELETE CASCADE" +
+                          ")");
+                 
+                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS user_activity (" +
+                          "    user_id INT PRIMARY KEY," +
+                          "    total_seconds INT DEFAULT 0," +
+                          "    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                          "    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE" +
+                          ")");
             } catch (Exception ex) {
                 System.err.println("Failed to auto-migrate schema: " + ex.getMessage());
             }

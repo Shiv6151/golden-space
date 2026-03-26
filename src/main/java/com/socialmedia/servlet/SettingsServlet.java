@@ -21,6 +21,20 @@ public class SettingsServlet extends HttpServlet {
     }
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+        User currentUser = (User) session.getAttribute("user");
+        int totalSeconds = userDAO.getTimeSpent(currentUser.getUserId());
+        request.setAttribute("timeSpentSeconds", totalSeconds);
+        request.getRequestDispatcher("settings.jsp").forward(request, response);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
@@ -86,7 +100,8 @@ public class SettingsServlet extends HttpServlet {
             if (emailSent) {
                 response.getWriter().write("{\"success\": true}");
             } else {
-                response.getWriter().write("{\"success\": true, \"message\": \"Development Mode: SMTP not configured. Use this OTP to proceed: " + otp + "\"}");
+                // Return success if email fails, but provide a message with the OTP for development purposes
+                response.getWriter().write("{\"success\": true, \"message\": \"Development Mode: SMTP not configured. OTP: " + otp + "\"}");
             }
         } else if ("verifyOtp".equals(action)) {
             String inputOtp = request.getParameter("otp");
@@ -147,14 +162,18 @@ public class SettingsServlet extends HttpServlet {
 
     private boolean sendEmailOtp(String toAddress, String otp) {
         String host = "smtp.gmail.com";
-        String from = "your-email@gmail.com"; // User should configure this
-        String pass = "your-app-password"; // User should configure this
+        String from = "your-email@gmail.com"; 
+        String pass = "your-app-password"; 
         
         java.util.Properties properties = System.getProperties();
         properties.put("mail.smtp.host", host);
         properties.put("mail.smtp.port", "465");
         properties.put("mail.smtp.ssl.enable", "true");
         properties.put("mail.smtp.auth", "true");
+        // Add timeouts to prevent hanging
+        properties.put("mail.smtp.connectiontimeout", "5000"); // 5s
+        properties.put("mail.smtp.timeout", "5000"); // 5s
+        properties.put("mail.smtp.writetimeout", "5000"); // 5s
         
         jakarta.mail.Session session = jakarta.mail.Session.getInstance(properties, new jakarta.mail.Authenticator() {
             protected jakarta.mail.PasswordAuthentication getPasswordAuthentication() {

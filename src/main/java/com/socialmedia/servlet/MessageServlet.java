@@ -75,9 +75,10 @@ public class MessageServlet extends HttpServlet {
                 User chatUser = userDAO.getUserById(chatUserId);
                 
                 if (chatUser != null) {
-                    messageDAO.markAsRead(currentUser.getUserId(), chatUserId);
+                    boolean isBlocked = userDAO.isBlocked(currentUser.getUserId(), chatUserId);
                     List<Message> conversation = messageDAO.getConversation(currentUser.getUserId(), chatUserId);
                     request.setAttribute("chatUser", chatUser);
+                    request.setAttribute("isBlocked", isBlocked);
                     request.setAttribute("conversation", conversation);
                 } else if (!"true".equals(request.getParameter("ajax"))) {
                     // Only redirect if not an AJAX call to avoid breaking polling
@@ -189,6 +190,16 @@ public class MessageServlet extends HttpServlet {
         
         try {
             int receiverId = Integer.parseInt(request.getParameter("receiverId"));
+            
+            // Check if blocked
+            if (userDAO.isBlocked(currentUser.getUserId(), receiverId)) {
+                if ("true".equals(request.getParameter("ajax"))) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                } else {
+                    response.sendRedirect("MessageServlet?with=" + receiverId + "&error=blocked");
+                }
+                return;
+            }
             
             Message msg = new Message();
             msg.setSenderId(currentUser.getUserId());

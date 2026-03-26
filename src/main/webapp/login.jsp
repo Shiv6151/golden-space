@@ -31,7 +31,10 @@
                     <input class="form-input" type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label class="form-label" for="password" style="margin-bottom:0.1rem;">Password</label>
+                        <a href="forgot-password.jsp" style="font-size:0.8rem; color:var(--primary-color); text-decoration:none; margin-bottom:0.1rem;">Forgot?</a>
+                    </div>
                     <input class="form-input" type="password" id="password" name="password" required placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn-primary">Sign In</button>

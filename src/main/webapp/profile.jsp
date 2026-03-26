@@ -151,8 +151,9 @@
                         ${profileUser.name}
                     </div>
                     <c:if test="${not empty profileUser.headline}">
-                        <div class="profile-headline" style="color: var(--text-main); margin-bottom: 0.5rem; font-size: 1rem; line-height: 1.3;">
-                            ${profileUser.headline}
+                        <div class="profile-headline" style="color: var(--text-muted); margin-bottom: 0.6rem; font-size: 0.95rem; line-height: 1.4; display: flex; align-items: flex-start; gap: 0.4rem;">
+                            <i class="fas fa-briefcase" style="margin-top: 3px; font-size: 0.8rem; color: var(--primary-color); flex-shrink: 0;"></i>
+                            <span>${profileUser.headline}</span>
                         </div>
                     </c:if>
                     <div class="ig-bio-text" style="font-size: 0.9rem; line-height: 1.4;">${profileUser.bio != null ? profileUser.bio : "No bio available."}</div>
@@ -573,7 +574,7 @@
     <!-- Follow Modal (Global) -->
     <div id="followModal" class="modal">
         <div class="modal-content card" style="max-width:400px;">
-            <span class="close" onclick="closeFollowModal()">&times;</span>
+            <span class="close" onclick="closeFollowListModal()" style="position:absolute; top:1rem; right:1.25rem; font-size:1.75rem; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</span>
             <h2 id="followModalTitle">Users</h2>
             <div id="followModalContent" style="margin-top:1.5rem; max-height: 400px; overflow-y:auto; padding-right:0.5rem;">
                 <div class="text-center text-muted"><i class="fas fa-spinner fa-spin"></i> Loading...</div>

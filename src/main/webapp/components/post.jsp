@@ -1,8 +1,8 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
-<div class="card post-card">
-    <div class="post-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
+<div class="card post-card" style="padding: 0.75rem;">
+    <div class="post-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
         <div style="display:flex; gap:1rem; align-items:center;">
             <c:choose>
                 <c:when test="${not empty post.userPhoto}">
@@ -110,7 +110,7 @@
         </c:when>
     </c:choose>
 
-    <div class="post-content" id="post-content-${post.postId}" style="margin: 0; font-size: 0.95rem; line-height: 1.4; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+    <div class="post-content" id="post-content-${post.postId}" style="margin: 0 0 0.5rem 0; font-size: 0.95rem; line-height: 1.4; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
         <p class="post-text" style="color: #2d3436; margin: 0; white-space: pre-wrap; word-break: break-word;">${post.postContent}</p>
     </div>
 

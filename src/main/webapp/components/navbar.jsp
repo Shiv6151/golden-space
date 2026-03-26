@@ -134,10 +134,23 @@
                     
                     let actorUrl = ctx + '/ProfileServlet?id=' + notif.actorId;
 
+                    let timeStr = '';
+                    if (notif.time) {
+                        try {
+                            const date = new Date(notif.time.replace(' ', 'T'));
+                            const diff = (new Date() - date) / 1000;
+                            if (diff < 60) timeStr = 'Just now';
+                            else if (diff < 3600) timeStr = Math.floor(diff / 60) + 'm ago';
+                            else if (diff < 86400) timeStr = Math.floor(diff / 3600) + 'h ago';
+                            else timeStr = Math.floor(diff / 86400) + 'd ago';
+                        } catch(e) { console.error(e); }
+                    }
+
                     html += '<div style="padding:1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem; background: ' + (notif.isRead ? 'transparent' : 'rgba(255,107,129,0.05)') + ';">' +
                         '<a href="' + actorUrl + '"><img src="' + fullPhoto + '" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;"></a>' +
                         '<div style="flex:1;">' +
                             '<div style="font-size:0.9rem;"><strong><a href="' + actorUrl + '" style="color:inherit; text-decoration:none;">@' + cleanName + '</a></strong> ' + message + '</div>' +
+                            '<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">' + timeStr + '</div>' +
                             actionBtn +
                         '</div>' +
                     '</div>';
@@ -181,6 +194,17 @@
     document.addEventListener('DOMContentLoaded', function() {
         checkPendingRequests();
         setInterval(checkPendingRequests, 30000); // Relaxed to 30 seconds for better performance
+        
+        // Activity tracking ping every 30 seconds
+        setInterval(function() {
+            if (window.currentUserId) {
+                fetch('${pageContext.request.contextPath}/ActivityServlet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=ping'
+                }).catch(err => console.error('Activity ping failed:', err));
+            }
+        }, 30000);
     });
 </script>
 

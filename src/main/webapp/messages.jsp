@@ -779,13 +779,6 @@
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
-
-                        <form action="MessageServlet" method="POST" class="chat-form" enctype="multipart/form-data" id="chatFormObject" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                            <input type="hidden" name="receiverId" value="${chatUser.userId}">
-                            <input type="file" name="attachment" id="chat-attachment" accept="image/*,video/*,application/pdf" style="display: none;" onchange="handleChatAttachmentPreview(this)">
-
-                            <button type="button" class="btn btn-outline" style="flex-shrink:0; border-radius: 50%; width: 42px; height: 42px; padding: 0; display:flex; justify-content:center; align-items:center; border: none; background: var(--bg-light); color: var(--primary-color);" onclick="document.getElementById('chat-attachment').click()" title="Attach File">
-                                <i class="fas fa-plus"></i>
                             </button>
 
                             <input type="text" name="messageText" class="form-input" placeholder="Type a message..." autocomplete="off" style="flex: 1; border-radius: 2rem; min-width: 0;">
@@ -965,15 +958,30 @@
                                      ontouchend="cancelLongPress()" 
                                      style="margin-bottom: 0px; max-width: 80%; width: fit-content; cursor: pointer; user-select: none; -webkit-user-select: none;">
                                     \${attachmentHtml}
-                                    \${msg.text.includes('[POST_SHARE:') ? msg.text.replace(/\\[POST_SHARE:(\\d+)\\]/g, function(match, p1) {
-                                        const cId = 'poll-post-' + msg.id + '-' + p1;
-                                        setTimeout(function() {
-                                            if(typeof renderRichPostPreview === 'function') {
-                                                renderRichPostPreview(document.getElementById(cId), p1);
-                                            }
-                                        }, 100);
-                                        return '<div id="' + cId + '" style="min-height:100px; display:flex; align-items:center; justify-content:center; padding:1rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-light); margin-top:0.5rem;"><i class="fas fa-spinner fa-spin text-muted" style="font-size:1.5rem;"></i><span style="margin-left:8px; font-size:0.85rem; color:var(--text-muted);">Loading Shared Post...</span></div>';
-                                    }) : msg.text}
+                                    ${(function() {
+                                        var rawText = msg.text || '';
+                                        if (rawText.includes('[POST_SHARE:')) {
+                                            var postShareRegex = /\[POST_SHARE:(\d+)\]/g;
+                                            return rawText.replace(postShareRegex, function(match, p1) {
+                                                var cId = 'poll-post-' + msg.id + '-' + p1;
+                                                setTimeout(function() {
+                                                    var el = document.getElementById(cId);
+                                                    if (el && typeof renderRichPostPreview === 'function') {
+                                                        renderRichPostPreview(el, p1);
+                                                    } else {
+                                                        setTimeout(function() {
+                                                            var el2 = document.getElementById(cId);
+                                                            if (el2 && typeof renderRichPostPreview === 'function') {
+                                                                renderRichPostPreview(el2, p1);
+                                                            }
+                                                        }, 800);
+                                                    }
+                                                }, 150);
+                                                return '<div id="' + cId + '" style="min-height:100px; display:flex; align-items:center; justify-content:center; padding:1rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-light); margin-top:0.5rem;"><i class="fas fa-spinner fa-spin text-muted" style="font-size:1.5rem;"></i><span style="margin-left:8px; font-size:0.85rem; color:var(--text-muted);">Loading Shared Post...</span></div>';
+                                            });
+                                        }
+                                        return rawText;
+                                    })()}
                                     <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:4px;">
                                         <div class="msg-time local-time-convert" data-time="\${msg.time}" data-format="time"></div>
                                     </div>
@@ -1321,6 +1329,14 @@
                 if(m !== menu) m.style.display = 'none';
             });
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        function goToFirstMessage() {
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow) {
+                chatWindow.scrollTo({ top: 0, behavior: 'smooth' });
+                document.getElementById('chatHeaderMenu').style.display = 'none';
+            }
         }
     </script>
     

@@ -1,5 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 <%
     if (session.getAttribute("user") == null) {
         response.sendRedirect("login.jsp");
@@ -17,6 +17,20 @@
     <link rel="stylesheet" href="css/styles.css?v=<%= System.currentTimeMillis() %>">
     <link rel="stylesheet" href="css/app.css?v=<%= System.currentTimeMillis() %>">
     <style>
+        /* Mobile fix for chat background buttons */
+        @media (max-width: 600px) {
+            .chat-bg-actions {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                width: 100% !important;
+                gap: 0.5rem !important;
+                margin-top: 1rem !important;
+                justify-content: stretch !important;
+            }
+            .chat-bg-actions button {
+                width: 100% !important;
+            }
+        }
         .settings-container {
             max-width: 600px;
             margin: 2rem auto;
@@ -238,7 +252,7 @@
                     <div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
                             <div style="font-weight:600; color:var(--text-main);">Change Password</div>
-                            <a href="javascript:void(0)" onclick="startForgotPasswordFlow()" style="font-size:0.85rem; color:var(--primary-color); text-decoration:none; font-weight:600;">Forgot Password?</a>
+                            <a href="javascript:void(0)" onclick="startForgotPasswordFlow(event)" style="font-size:0.85rem; color:var(--primary-color); text-decoration:none; font-weight:600;">Forgot Password?</a>
                         </div>
                         <form id="passwordForm" onsubmit="updatePassword(event)">
                             <input type="password" id="currentPassword" placeholder="Current Password" class="form-input" required>
@@ -287,6 +301,35 @@
                             <button type="button" onclick="removeChatBgSetting()" class="btn" style="padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); color: var(--danger-color); font-size: 0.85rem; background: transparent; white-space: nowrap;">Remove</button>
                         </div>
                         <input type="file" id="settingChatBgInput" accept="image/*" style="display:none" onchange="handleSettingChatBg(this)">
+                    </div>
+
+                    <!-- Usage Statistics Section -->
+                    <div class="setting-group" style="margin-top: 1.5rem;">
+                        <button type="button" class="setting-header-btn" onclick="toggleSection('usageSection', this)">
+                            <div style="display:flex; align-items:center; gap:1rem;">
+                                <div class="setting-icon-wrapper" style="background: #a29bfe; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:600; font-size:1.05rem; color:var(--text-main);">Usage Statistics</div>
+                                    <small class="text-muted" style="font-size: 0.85rem; color: var(--text-muted);">Time spent on the platform</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                        </button>
+                        <div id="usageSection" class="setting-content-area" style="padding:1rem; display: none;">
+                            <div style="background:var(--bg-white); border-radius:12px; border:1px solid var(--border-color); padding:1.5rem; text-align:center;">
+                                <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">TOTAL TIME SPENT</div>
+                                <div style="font-size:2rem; font-weight:700; color:var(--primary-color);">
+                                    <c:set var="totalSec" value="${timeSpentSeconds != null ? timeSpentSeconds : 0}" />
+                                    <fmt:formatNumber value="${(totalSec - (totalSec % 3600)) / 3600}" pattern="#0"/>h 
+                                    <fmt:formatNumber value="${((totalSec % 3600) - (totalSec % 60)) / 60}" pattern="#0"/>m
+                                </div>
+                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+                                    Based on active usage pings.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Chat Themes -->
@@ -549,8 +592,8 @@
         });
 
         // Forgot Password Flow
-        function startForgotPasswordFlow() {
-            const btn = event.target;
+        function startForgotPasswordFlow(e) {
+            const btn = e ? e.target : event.target;
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             btn.style.pointerEvents = 'none';
@@ -565,6 +608,9 @@
                 btn.innerHTML = originalText;
                 btn.style.pointerEvents = 'auto';
                 if (data.success) {
+                    if (data.message) {
+                        alert(data.message);
+                    }
                     document.getElementById('otpModal').style.display = 'flex';
                 } else {
                     alert(data.message || 'Failed to send OTP.');

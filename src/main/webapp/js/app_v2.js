@@ -1602,13 +1602,13 @@ function renderFollowList(users) {
 }
 
 function closeFollowListModal() {
-    var modal = document.getElementById('followListModal');
+    var modal = document.getElementById('followModal');
     if (modal) modal.style.display = 'none';
 }
 
 // Close when clicking outside the card
 document.addEventListener('click', function(e) {
-    var modal = document.getElementById('followListModal');
+    var modal = document.getElementById('followModal');
     if (modal && e.target === modal) modal.style.display = 'none';
 });
 // --- End Followers / Following List Modal ---

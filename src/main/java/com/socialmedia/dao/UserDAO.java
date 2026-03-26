@@ -125,6 +125,22 @@ public class UserDAO {
         return null;
     }
 
+    public User getUserByEmail(String email) {
+        String query = "SELECT * FROM Users WHERE email = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+             
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return extractUserFromResultSet(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean updatePassword(int userId, String password) {
         String query = "UPDATE Users SET password = ? WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -234,6 +250,85 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean updateActivityTime(int userId, int seconds) {
+        String query = "INSERT INTO user_activity (user_id, total_seconds, last_active) VALUES (?, ?, NOW()) " +
+                       "ON DUPLICATE KEY UPDATE total_seconds = total_seconds + ?, last_active = NOW()";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, seconds);
+            stmt.setInt(3, seconds);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int getTimeSpent(int userId) {
+        String query = "SELECT total_seconds FROM user_activity WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("total_seconds");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean isBlocked(int blockerId, int blockedId) {
+        String query = "SELECT 1 FROM blocked_users WHERE (blocker_id = ? AND blocked_id = ?) OR (blocker_id = ? AND blocked_id = ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+            stmt.setInt(3, blockedId);
+            stmt.setInt(4, blockerId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public java.util.List<User> getSuggestedUsers(int currentUserId, int limit) {
+        java.util.List<User> users = new java.util.ArrayList<>();
+        // Suggest users the current user is NOT following, is NOT blocked by/blocking, and is NOT themselves
+        String query =
+            "SELECT u.*, " +
+            "    (SELECT COUNT(*) FROM followers f2 WHERE f2.following_id = u.user_id) AS follower_count " +
+            "FROM Users u " +
+            "WHERE u.user_id != ? " +
+            "  AND u.user_id NOT IN (SELECT following_id FROM followers WHERE follower_id = ?) " +
+            "  AND u.user_id NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = ?) " +
+            "  AND u.user_id NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = ?) " +
+            "ORDER BY follower_count DESC " +
+            "LIMIT ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, currentUserId);
+            stmt.setInt(2, currentUserId);
+            stmt.setInt(3, currentUserId);
+            stmt.setInt(4, currentUserId);
+            stmt.setInt(5, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUserFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
     }
 
     private User extractUserFromResultSet(ResultSet rs) throws SQLException {
